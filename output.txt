@@ -1,0 +1,10 @@
+./utils/cmdSanitize.js
+./models/file_details.js
+./models/altspelling.js
+./models/staging_hitlijsten.js
+./controllers/altSpellingController.js
+./controllers/songSpellingController.js
+./routes/indexroutes.js
+./src/ui/pages/EditPage.jsx
+
+./src/ui/pages/StagingResults.jsx

@@ -1,0 +1,344 @@
+/* =========================
+   THEME TOKENS on <body>
+   ========================= */
+
+/* Fallback */
+body {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #38bdf8;
+  --focus: #38bdf8;
+
+  /* Dropdown tokens */
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  /* Search tokens */
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* Slate */
+body.theme-slate {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #38bdf8;
+  --focus: #38bdf8;
+
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* Light */
+body.theme-light {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --text: #0b1220;
+  --border: rgba(15,23,42,0.14);
+
+  --nav-bg: #ffffff;
+  --nav-text: #0b1220;
+  --nav-hover: rgba(2,6,23,0.06);
+  --accent: #1d4ed8;
+  --focus: #1d4ed8;
+
+  --dd-bg: #ffffff;
+  --dd-text: #0b1220;
+  --dd-border: rgba(15,23,42,0.14);
+  --dd-hover: rgba(2,6,23,0.06);
+  --dd-divider: rgba(15,23,42,0.12);
+
+  --search-outline: rgba(2,6,23,0.65);
+  --search-outline-hover: rgba(2,6,23,0.90);
+}
+
+/* Teal */
+body.theme-teal {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0b1320;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #14b8a6;
+  --focus: #22d3ee;
+
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* =========================
+   HOLY GRAIL (existing BEM)
+   ========================= */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* App root wrapper */
+.hg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header now contains the navbar */
+/* Header now contains the navbar. Reset any old header styling that could clip/overwrite it. */
+.hg__header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+
+  /* reset old header layout */
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* Ensure navbar spans full width in header */
+.hg__header .navbar {
+  width: 100%;
+}
+
+/* Body columns */
+.hg__body {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  grid-template-columns: 200px 1fr 200px;
+  grid-template-areas: "nav main aside";
+}
+
+.hg__nav   { grid-area: nav; }
+.hg__main  { grid-area: main; }
+.hg__aside { grid-area: aside; }
+
+@media (max-width: 991.98px) {
+  .hg__body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "nav"
+      "main"
+      "aside";
+  }
+}
+
+/* Panels */
+.hg__nav,
+.hg__main,
+.hg__aside,
+.hg__footer {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px;
+}
+
+.hg__nav,
+.hg__aside {
+  background: var(--panel-2);
+}
+
+.hg__footer {
+  margin: 8px;
+  text-align: center;
+}
+
+/* Side nav list */
+.hg__navTitle { margin-bottom: 8px; }
+
+.hg__navList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.hg__navList a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hg__navList a:hover {
+  text-decoration: underline;
+}
+
+.hg__navList a.active {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+/* =========================
+   NAVBAR SKIN (Bootstrap override)
+   ========================= */
+
+.hg .navbar {
+  background-color: var(--nav-bg) !important;
+}
+
+.hg .navbar .navbar-brand,
+.hg .navbar .nav-link,
+.hg .navbar .navbar-toggler {
+  color: var(--nav-text) !important;
+}
+
+/* hover */
+.hg .navbar .nav-link:hover,
+.hg .navbar .nav-link:focus {
+  background: var(--nav-hover);
+  border-radius: 0.5rem;
+}
+
+/* active underline - not only color */
+.hg .navbar .nav-link.active {
+  font-weight: 600;
+  position: relative;
+}
+
+.hg .navbar .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 6px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* focus rings */
+.hg .navbar .nav-link:focus-visible,
+.hg .navbar .btn:focus-visible,
+.hg .navbar .form-control:focus-visible,
+.hg .dropdown-item:focus-visible,
+.hg__navList a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Light theme: make toggler icon visible */
+body.theme-light .navbar .navbar-toggler {
+  border-color: rgba(15,23,42,0.25) !important;
+}
+
+body.theme-light .navbar .navbar-toggler-icon {
+  filter: invert(1) grayscale(1) contrast(2);
+}
+
+/* =========================
+   DROPDOWNS (theme-aware)
+   ========================= */
+
+.hg .dropdown-menu {
+  background: var(--dd-bg);
+  color: var(--dd-text);
+  border: 1px solid var(--dd-border);
+}
+
+.hg .dropdown-menu .dropdown-divider {
+  border-top-color: var(--dd-divider);
+}
+
+.hg .dropdown-item {
+  color: var(--dd-text);
+}
+
+.hg .dropdown-item:hover,
+.hg .dropdown-item:focus {
+  background: var(--dd-hover);
+  color: var(--dd-text);
+}
+
+.hg .dropdown-item.active,
+.hg .dropdown-item:active {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+/* =========================
+   SEARCH (theme-aware)
+   ========================= */
+
+body.theme-slate .hg-search-input,
+body.theme-teal  .hg-search-input {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+body.theme-slate .hg-search-input::placeholder,
+body.theme-teal  .hg-search-input::placeholder {
+  color: rgba(255,255,255,0.70);
+}
+
+body.theme-slate .hg-search-input:focus,
+body.theme-teal  .hg-search-input:focus {
+  background: rgba(255,255,255,0.14);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(56,189,248,0.25);
+}
+
+body.theme-light .hg-search-input {
+  background: #fff;
+}
+
+.hg-search-btn {
+  background: transparent;
+  border: 1px solid var(--search-outline);
+  color: var(--nav-text);
+}
+
+.hg-search-btn:hover {
+  border-color: var(--search-outline-hover);
+  color: var(--nav-text);
+}
+
+/* clock digital: use nav text color by default */
+.clock-digital { color: var(--nav-text); opacity: 0.75; }
+
+/* in light theme: nav text is dark already, stays readable */

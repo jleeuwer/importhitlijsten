@@ -1,0 +1,5 @@
+{
+  "test:sprint2h-y": "node --test tests/services_2h_y_matchingDiscogsStatusHardening.test.js tests/static_2h_y_matching_discogs_status_hardening.test.js",
+  "db:migrate:sprint2h-y": "bash scripts/run_2h_y_migration.sh",
+  "diagnostics:sprint2h-y": "bash scripts/run_2h_y_diagnostics.sh"
+}

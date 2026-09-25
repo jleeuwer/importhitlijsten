@@ -1,0 +1,111 @@
+/* =========
+   Holy Grail (Flex) – robust version for Bootstrap tables
+   ========= */
+
+/* Global reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #fffdf5;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+/* Make sure the React root can fill the viewport */
+#root {
+  min-height: 100vh;
+}
+
+/* Page shell */
+.hg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header + footer full width */
+.hg__header,
+.hg__footer {
+  padding: 10px 12px;
+  margin: 6px;
+  border-radius: 10px;
+  background: #fcfff5;
+}
+
+/* 3-column body */
+.hg__body{
+  display:flex;
+  flex:1;
+  gap:10px;
+  padding:6px;
+
+  /* IMPORTANT: prevent columns from wrapping */
+  flex-wrap: nowrap;
+
+  /* keep them aligned */
+  align-items: stretch;
+}
+
+/* Explicit desktop order (guarantees nav | main | aside) */
+.hg__nav   { order: 1; }
+.hg__main  { order: 2; }
+.hg__aside { order: 3; }
+
+/* Sidebars fixed */
+.hg__nav,
+.hg__aside{
+  flex: 0 0 200px;
+  width:200px;
+  overflow:auto;
+}
+
+/* Main must be able to shrink (tables!) */
+.hg__main{
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow:auto;
+}
+
+@media (max-width: 600px){
+  .hg__body{ flex-direction: column; flex-wrap: nowrap; }
+
+  /* mobile order: nav → main → aside */
+  .hg__nav   { order: 1; width:auto; flex:0 0 auto; }
+  .hg__main  { order: 2; }
+  .hg__aside { order: 3; width:auto; flex:0 0 auto; }
+}
+
+/* ---- Import page hardening ---- */
+.import-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.import-table-wrap table {
+  white-space: nowrap; /* prevent wrapping causing crazy height/layout */
+}
+
+.import-pre {
+  max-width: 100%;
+  overflow: auto;
+}
+
+.modal-98w {
+  max-width: 98vw !important;
+  width: 98vw !important;
+}
+
+td.wrap-col, th.wrap-col {
+  white-space: normal !important;
+  word-break: break-word;
+}

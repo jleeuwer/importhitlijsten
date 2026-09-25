@@ -1,0 +1,787 @@
+We should add functionality for replacing the string "&amp;" by "&" "hl_titel_song" and "hl_artiest". That should be applied to all rows in the CSV file. 
+This replacement should be supported in two ways:
+1. Prior to the insertion of the data in the database or after the reading of the CSV-data. 
+2. In the "Edit"-screen there should be a button which you can click and that will do the replacing for all rows part of the loaded run-id
+
+for a more robust solution I think it is best to apply full HTML entity decoding (&quot;, &#39;, etc.), can you implement that
+
+Next enhancement:
+In the edit screen, add a button "ArtistSpelling". When pressing this button:
+1. For each row in the run
+- Lookup the correct spelling of the artist in the table "artiesten_spelling" using the value of "hl_artiest". 
+- If found: store the value of the attribute "ar_artist_name" from the table "artist" in "as_correcte_artiest_spelling" based on the value of "as_artist_key" and the value of the attribute "as_artist_key" in "hl_artist_key"
+- If not found:
+- add an entry into the table artist. The value of "hl_artiest" should be stored in "ar_artist_name"
+- the primary key "ar_artist_key" of artist is automatically generated upon insertion. 
+- That primary key should be remembered and used for creating an entry into "artiesten_spelling" where the value of "ar_artist_key" should be assigned to "as_artist_key" and the value of "hl_artiest" to "as_alternatieve_spelling"
+- the primary key "ar_artist_key" generated should also be assigned to the value of "hl_artist_key" for the specific "hl_artiest"
+The "if found" and the "if not found" situation should both be considered as a transaction
+
+Next change :
+The field "fd_tag_title" is missing from the table in the "/edit" screen and make the necessary changes so that it is updated and read when appropriate in the code. Please add that and while you are changing the UI:
+- Please change the text "hl_hitlijst (optional filter)" to "Hitlijst (optional filter)"
+- Please change the text "hl_uitzendjaar (optional filter)" to "Uitzendjaar (optional filter)"
+- The buttons "Decode HTML char" and "ArtistSpelling" should be place vertically in the "Aside" section so that that section has a purpose too
+- The text "Reserverd for future use" can than be removed from the "Aside"-section
+
+Next change
+In the edit screen, add a button "Songspelling" to the buttons in the "Aside"-section. When pressing this button:
+1. For each row in the run
+We need to determine the correct spelling of the song:
+Check for the combination of "hl_titel_song" and "hl_artiest" exist in the table song_spelling. 
+If it exists than assign the value of fd_tag_title from the table song_spelling to fd_tag_title from the table staging_hitlijsten.
+If it not exists than assign the vale of hl_titel_song to the fd_tag_title from the table staging_hitlijsten.
+
+CREATE TABLE IF NOT EXISTS public.song_spelling
+(
+    hl_titel_song character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    hl_artiest character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    fd_tag_title character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    song_spelling_key bigint NOT NULL DEFAULT nextval('song_spelling_song_spelling_key_seq'::regclass),
+    CONSTRAINT song_spelling_pkey PRIMARY KEY (song_spelling_key)
+)
+
+We need to make changes to a table, given the following table:
+CREATE TABLE IF NOT EXISTS public.staging_hitlijsten
+(
+    hl_hitlijst character varying(255) COLLATE pg_catalog."default",
+    hl_uitzendjaar integer,
+    hl_titel_song citext COLLATE pg_catalog."default",
+    hl_artiest citext COLLATE pg_catalog."default",
+    hl_positie integer,
+    hl_jaar integer,
+    fd_tag_title character varying(150) COLLATE pg_catalog."default",
+    as_correcte_artiest_spelling character varying(150) COLLATE pg_catalog."default",
+    fd_file_name character varying(255) COLLATE pg_catalog."default",
+    hl_discogs_link text COLLATE pg_catalog."default",
+    hl_find_cmd character varying(255) COLLATE pg_catalog."default",
+    hl_commando character varying(255) COLLATE pg_catalog."default",
+    hl_add_info text COLLATE pg_catalog."default",
+    hl_artist_key integer,
+    hl_import_run_id uuid
+)
+
+The attributes fd_file_name, hl_commando ad hl_add_info can be removed. The associated references in the application to these fields also need to be removed.
+
+So next enhancement :
+
+I need a table consisting of one field named "st_string_delete", the table should be called string_del_patterns. And I need to be able to perform CRUD-functions on it. Data should be presented in table-fomrat. A menu-item should be placed in the nav-section of the screen so I can go to that functionality
+
+Next enhancement:
+the table "hitlijsten" should be changed, an attribute named "fd_tag_title" of type "character varying(150)" should be added to the table. 
+
+CREATE TABLE IF NOT EXISTS public.staging_hitlijsten
+(
+    hl_hitlijst character varying(255) COLLATE pg_catalog."default",
+    hl_uitzendjaar integer,
+    hl_titel_song citext COLLATE pg_catalog."default",
+    hl_artiest citext COLLATE pg_catalog."default",
+    hl_positie integer,
+    hl_jaar integer,
+    fd_tag_title character varying(150) COLLATE pg_catalog."default",
+    as_correcte_artiest_spelling character varying(150) COLLATE pg_catalog."default",
+    hl_discogs_link text COLLATE pg_catalog."default",
+    hl_find_cmd character varying(255) COLLATE pg_catalog."default",
+    hl_artist_key integer,
+    hl_import_run_id uuid
+)
+
+CREATE TABLE IF NOT EXISTS public.hitlijsten
+(
+    hl_hitlijst character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    hl_uitzendjaar integer NOT NULL,
+    hl_positie integer NOT NULL,
+    hl_commando character varying(255) COLLATE pg_catalog."default",
+    hl_add_info text COLLATE pg_catalog."default",
+    ar_artist_key integer,
+    fd_key bigint NOT NULL
+)
+
+next enhancement:
+In the edit screen, add a button "PatternDelete" to the buttons in the "Aside"-section. When pressing this button:
+1. For each row in the run
+Check for each entry in the table "string_del_patterns" if the pattern exists in the field "hl_titel_song".
+If the pattern exists in the field "hl_titel_song", delete if along with any trailing spaces that are left.
+This function should always be executed before "SongSpelling", becaue it will increase the number of positive hits in "SongSpelling". Perhaps we should link the two together , that you can't run "SongSpelling" prior to have run this function
+
+Title : Lookup to file_details 
+Next enhancement:
+In the situation where we are looking for an entry in the table "file_details", where we are retrieving the "fd_tag_title", we should enhance the functionality. 
+At the start of each row, a Checkmark should be added if the fd_tag_title is found in "file_details". I propose to use an icon from Bootstrap: https://icons.getbootstrap.com/icons/check-square-fill/. 
+The checkmark should be clickable. The checkmark should be green and it should be understandable for the user that he can click it.
+If the fd_tag_title is not found, than a icon from bootstrap should be displayed, I propose : https://icons.getbootstrap.com/icons/x-square/. This should be in Red-color and should not be clicable.
+When fd_tag_title is found and the user clicks the checkmark, than a popup screen should appear with a table that displays all the entries found in file_details. The following attributes should be displayed:
+    fd_correct_artist,
+    fd_tag_title,
+    fd_file_name,
+    fd_hitlijst,
+    fd_duration,
+    fd_year_song_publish,
+    fd_year_song_version,
+    st_song_type
+There is a button "Close" to return to the Edit-screen
+If fd_tag_title is not found, than "hl_find_cmd" The field "hl_find_cmd" should be populated with the a MacOS like command line command, it is the following string:
+"findcopy.sh "&""""& "*"&left([fd_correct_artist];10)&"*"&fd_tag_title&"*"&""""&" "&""""&"$TARGET"&"""". This strings comes from an Excel formula and should be converted to a Javascript variant
+The "&"-sign comes from Excel where it is the sign to concatenate strings.
+Before the values of the fields "fd_correct_artist" and "fd_tag_title" are concatenated in the hl_fnd_cmd field they should be stripped from special characters, punctuation marks and diacritics / accent marks
+But only for the column "hl_find_cmd", the values of "fd_correct_artist" and "fd_tag_title" itself should remain unchanged. 
+
+findcopy.sh is a script on the local machine
+
+
+If you prefer to work with other Icon-set, please indicate so.
+
+st_song_type comes from a join between song_types and file_details where st_song_type = fd_song_type_key
+
+CREATE TABLE IF NOT EXISTS public.song_types
+(
+    st_song_type_key integer NOT NULL GENERATED BY DEFAULT AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    st_song_type character(20) COLLATE pg_catalog."default" NOT NULL,
+    st_song_type_desc character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT song_types_pkey PRIMARY KEY (st_song_type_key)
+)
+
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_year bigint,
+    fd_tag_artist text COLLATE pg_catalog."default",
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_artist_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_file_type text COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    fd_date_created timestamp without time zone,
+    fd_date_modified timestamp without time zone,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+CREATE TABLE IF NOT EXISTS public.song_location
+(
+    sl_location_desc citext COLLATE pg_catalog."default" NOT NULL,
+    sl_location_path character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT song_location_pkey PRIMARY KEY (sl_location_desc)
+)
+
+Title : Link an alternative spelling to the correct spelling 
+
+Next enhancement
+This enhancement is applicable to every row where originally no fd_tag_tile was found and the icon "https://icons.getbootstrap.com/icons/x-square/" is displayed and hl_find_cmd is not blank. 
+A button should be added to the end of row called "AltSpelling". 
+If the user clicks that button the application opens a new popup screen with a table containing all the entries from fd_file_details where the attribute "fd_correct_artist" is equal to the selected value of "as_correcte_artiest_spelling" of the edit screen.
+The table should display the following info:
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_duration interval,
+    st_song_type_desc character(20) COLLATE pg_catalog."default" NOT NULL,
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+
+The user should be able to select a row from that list that matches the song title he is looking for. For the selected row, the fd_tag_title should be returned to the previous screen. 
+But before returning to the previous screen an entry should be added to the table "song_spelling" where :
+hl_titel_song is equal to "hl_titel_song" from staging_hitlijsten
+hl_artiest is equal to the value of "as_correcte_artiest_spelling" from staging_hitlijsten
+fd_tag_title is set to the value of the selected "fd_tag_title" from the popup screen 
+When returning to the edit screen, fd_tag_title should be displayed and status of the line should change to a found "fd_tag_title"
+
+Before you implement the change please analyse and summarize your understanding and if you have questions, I can clarify them first 
+
+The DDL's for the postgres tables concerned
+
+CREATE TABLE IF NOT EXISTS public.song_types
+(
+    st_song_type_key integer NOT NULL GENERATED BY DEFAULT AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    st_song_type character(20) COLLATE pg_catalog."default" NOT NULL,
+    st_song_type_desc character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT song_types_pkey PRIMARY KEY (st_song_type_key)
+)
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_tag_artist text COLLATE pg_catalog."default",
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+CREATE TABLE IF NOT EXISTS public.song_spelling
+(
+    hl_titel_song citext COLLATE pg_catalog."default" NOT NULL,
+    hl_artiest citext COLLATE pg_catalog."default" NOT NULL,
+    fd_tag_title character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    song_spelling_key bigint NOT NULL DEFAULT nextval('song_spelling_song_spelling_key_seq'::regclass),
+    CONSTRAINT song_spelling_pkey PRIMARY KEY (song_spelling_key),
+    CONSTRAINT song_spelling_title_artist_unique UNIQUE (hl_titel_song, hl_artiest)
+)
+
+CREATE TABLE IF NOT EXISTS public.staging_hitlijsten
+(
+    hl_hitlijst character varying(255) COLLATE pg_catalog."default",
+    hl_uitzendjaar integer,
+    hl_titel_song citext COLLATE pg_catalog."default",
+    hl_artiest citext COLLATE pg_catalog."default",
+    hl_positie integer,
+    hl_jaar integer,
+    fd_tag_title character varying(150) COLLATE pg_catalog."default",
+    as_correcte_artiest_spelling character varying(150) COLLATE pg_catalog."default",
+    hl_discogs_link text COLLATE pg_catalog."default",
+    hl_find_cmd character varying(255) COLLATE pg_catalog."default",
+    hl_artist_key integer,
+    hl_import_run_id uuid
+)
+
+
+
+
+
+
+
+=======================================
+
+Title : File_detail changes
+
+We need to change the table file_details:
+1. The column fd_occurences should be renamed to "fd_song_type_key", this is a foreign key to st_song_type_key of the table song_types
+2. The column "fd_tag_duration" should be dropped
+3. The column "fd_action" should be dropped
+4. The column "fd_sort" should be renamed to "fd_action". So this action is depending on the action 3.
+5. The column "fd_title_occ" should be dropped
+
+The table DDL:
+CREATE TABLE IF NOT EXISTS public.song_types
+(
+    st_song_type_key integer NOT NULL GENERATED BY DEFAULT AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+    st_song_type character(20) COLLATE pg_catalog."default" NOT NULL,
+    st_song_type_desc character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT song_types_pkey PRIMARY KEY (st_song_type_key)
+)
+
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_year bigint,
+    fd_tag_artist text COLLATE pg_catalog."default",
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_artist_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_jaar double precision,
+    fd_file_type text COLLATE pg_catalog."default",
+    fd_mix text COLLATE pg_catalog."default",
+    fd_action text COLLATE pg_catalog."default",
+    fd_sort text COLLATE pg_catalog."default",
+    fd_occurences double precision,
+    fd_tag_duration bigint,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_title_occ bigint,
+    fd_entry_modified timestamp without time zone,
+    fd_date_created timestamp without time zone,
+    fd_date_modified timestamp without time zone
+)
+
+Next set of changes to file_details
+1. Drop the column "fd_jaar"
+2. For the column "fd_mix", set all values of fd_mix to null where the value of that column is like "Niet gevonden"
+3. Rename the column "fd_mix" to "fd_duration"
+4. The value of "fd_duration" is the length of a song in hours:minutes:seconds. What datatype should that be? Please convert that datatype from text to the appropriate Postgresql datatype. It is an optional field, so nulls are acceptable. In the future it should be easy to display this duration as "hh:mm:ss" formats in Webpages
+
+
+Title : File_details change part 2
+
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_year bigint,
+    fd_tag_artist text COLLATE pg_catalog."default",
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_artist_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_file_type text COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    fd_date_created timestamp without time zone,
+    fd_date_modified timestamp without time zone,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+Remove the column fd_year, because it can be derived from fd_entry_added
+Remove the column fd_artist_title, because it can be derived from fd_correct_artist and fd_tag_title
+Remove the column fd_date_created
+Remove the column fd_date_modified
+Remove the column fd_file_type
+
+
+
+
+
+Title : Optimize file_details 
+
+We have to make some changes to file_details:
+1. The attribute "fd_tag_artist" needs to be dropped
+2. A new attribute "fd_artist_key" needs to be added which is a foreign key to "ar_artist_key" in the table artist 
+3. The attribute "fd_artist_key" needs to be set to the corresponding value of "ar_artist_key" where "fd_correct_artist" matches "ar_artist_name"
+
+Please make the necessary changes
+
+DDL's
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_tag_artist text COLLATE pg_catalog."default",
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst text COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.file_details
+    OWNER to postgres;
+-- Index: ix_file_details_fd_song_type_key
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_song_type_key;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_song_type_key
+    ON public.file_details USING btree
+    (fd_song_type_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+
+CREATE TABLE IF NOT EXISTS public.artist
+(
+    ar_artist_key integer NOT NULL DEFAULT nextval('artist_ar_artist_key_seq'::regclass),
+    ar_artist_name citext COLLATE pg_catalog."default" NOT NULL,
+    ar_artist_dateofbirth date,
+    ar_artist_passing date,
+    ar_website_url character varying(500) COLLATE pg_catalog."default",
+    ar_artist_notes text COLLATE pg_catalog."default",
+    ar_created_at timestamp with time zone NOT NULL DEFAULT now(),
+    ar_updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    ar_is_deleted boolean NOT NULL DEFAULT false,
+    ar_deleted_at timestamp with time zone,
+    CONSTRAINT artist_pkey PRIMARY KEY (ar_artist_key),
+    CONSTRAINT artist_ar_artist_name_key UNIQUE (ar_artist_name),
+    CONSTRAINT artist_dates_sane CHECK (ar_artist_dateofbirth IS NULL OR ar_artist_passing IS NULL OR ar_artist_passing >= ar_artist_dateofbirth),
+    CONSTRAINT artist_name_not_blank CHECK (btrim(ar_artist_name::text) <> ''::text),
+    CONSTRAINT artist_website_url_format CHECK (ar_website_url IS NULL OR ar_website_url::text ~* '^https?://'::text)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.artist
+    OWNER to postgres;
+-- Index: idx_artist_deleted_at
+
+-- DROP INDEX IF EXISTS public.idx_artist_deleted_at;
+
+CREATE INDEX IF NOT EXISTS idx_artist_deleted_at
+    ON public.artist USING btree
+    (ar_deleted_at ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default
+    WHERE ar_is_deleted = true;
+-- Index: idx_artist_not_deleted
+
+-- DROP INDEX IF EXISTS public.idx_artist_not_deleted;
+
+CREATE INDEX IF NOT EXISTS idx_artist_not_deleted
+    ON public.artist USING btree
+    (ar_artist_name COLLATE pg_catalog."default" ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default
+    WHERE ar_is_deleted = false;
+
+-- Trigger: trg_artist_insert_spelling
+
+-- DROP TRIGGER IF EXISTS trg_artist_insert_spelling ON public.artist;
+
+CREATE OR REPLACE TRIGGER trg_artist_insert_spelling
+    AFTER INSERT
+    ON public.artist
+    FOR EACH ROW
+    EXECUTE FUNCTION public.fn_artist_insert_spelling();
+
+
+
+Title : Export staging_hitlijsten to hitlijsten
+
+The next small fix is that in the tables "file_details", "hitlijsten" and "staging_hitlijsten" is the following:
+1. fd_correct_artist, fd_tag_title need to be changed into type "citext" 
+2. The changes in the application need to be made to work with these changed datatypes.
+
+DDL's 
+
+-- Table: public.file_details
+
+-- DROP TABLE IF EXISTS public.file_details;
+
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_correct_artist text COLLATE pg_catalog."default",
+    fd_tag_title text COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst citext COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    fd_artist_key integer,
+    fd_key bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
+    CONSTRAINT file_details_pkey PRIMARY KEY (fd_key),
+    CONSTRAINT file_details_fd_artist_key_fkey FOREIGN KEY (fd_artist_key)
+        REFERENCES public.artist (ar_artist_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT file_details_fd_hitlijst_fkey FOREIGN KEY (fd_hitlijst)
+        REFERENCES public.song_location (sl_location_desc) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.file_details
+    OWNER to postgres;
+-- Index: ix_file_details_fd_artist_key
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_artist_key;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_artist_key
+    ON public.file_details USING btree
+    (fd_artist_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: ix_file_details_fd_hitlijst
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_hitlijst;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_hitlijst
+    ON public.file_details USING btree
+    (fd_hitlijst COLLATE pg_catalog."default" ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: ix_file_details_fd_song_type_key
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_song_type_key;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_song_type_key
+    ON public.file_details USING btree
+    (fd_song_type_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+-- Table: public.staging_hitlijsten
+
+-- DROP TABLE IF EXISTS public.staging_hitlijsten;
+
+CREATE TABLE IF NOT EXISTS public.staging_hitlijsten
+(
+    hl_hitlijst citext COLLATE pg_catalog."default",
+    hl_uitzendjaar integer,
+    hl_titel_song citext COLLATE pg_catalog."default",
+    hl_artiest citext COLLATE pg_catalog."default",
+    hl_positie integer,
+    hl_jaar integer,
+    fd_tag_title character varying(150) COLLATE pg_catalog."default",
+    as_correcte_artiest_spelling character varying(150) COLLATE pg_catalog."default",
+    hl_discogs_link text COLLATE pg_catalog."default",
+    hl_find_cmd character varying(255) COLLATE pg_catalog."default",
+    hl_artist_key integer,
+    hl_import_run_id uuid
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.staging_hitlijsten
+    OWNER to postgres;
+-- Index: idx_staging_hitlijst_year
+
+-- DROP INDEX IF EXISTS public.idx_staging_hitlijst_year;
+
+CREATE INDEX IF NOT EXISTS idx_staging_hitlijst_year
+    ON public.staging_hitlijsten USING btree
+    (hl_hitlijst COLLATE pg_catalog."default" ASC NULLS LAST, hl_uitzendjaar ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: idx_staging_import_run
+
+-- DROP INDEX IF EXISTS public.idx_staging_import_run;
+
+CREATE INDEX IF NOT EXISTS idx_staging_import_run
+    ON public.staging_hitlijsten USING btree
+    (hl_import_run_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+    -- Table: public.hitlijsten
+
+-- DROP TABLE IF EXISTS public.hitlijsten;
+
+CREATE TABLE IF NOT EXISTS public.hitlijsten
+(
+    hl_hitlijst citext COLLATE pg_catalog."default" NOT NULL,
+    hl_uitzendjaar integer NOT NULL,
+    hl_positie integer NOT NULL,
+    hl_commando character varying(255) COLLATE pg_catalog."default",
+    hl_add_info text COLLATE pg_catalog."default",
+    ar_artist_key integer,
+    fd_key bigint NOT NULL,
+    fd_tag_title character varying(150) COLLATE pg_catalog."default",
+    CONSTRAINT hitlijsten_fd_key_fkey FOREIGN KEY (fd_key)
+        REFERENCES public.file_details (fd_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE RESTRICT
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.hitlijsten
+    OWNER to postgres;
+-- Index: ix_hitlijsten_fd_key
+
+-- DROP INDEX IF EXISTS public.ix_hitlijsten_fd_key;
+
+CREATE INDEX IF NOT EXISTS ix_hitlijsten_fd_key
+    ON public.hitlijsten USING btree
+    (fd_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+==========================================================
+Correcting error on AltSpelling:
+
+There are still issues with AltSongSpelling. Let me describe the process for
+
+The AltSpelling-button now always appears. 
+The AltSpelling-button should only appear if: 
+1. No fd_tag_title was retrieved from file_details. 
+
+So let me describe the process once more:
+When new songs are imported via the csv-file, the function should so the edit screen without having process any function related to "ArtistSpelling" or "SongSpelling"
+When the user clicks on "SongSpelling"
+1. Check if the song title has an entry in song_spelling, if so use that corrected_spelling from song_spelling. 
+public.song_spelling.hl_titel_song is equal to public.staging_hitlijsten.hl_titel_song
+public.song_spelling.hl_artiest is equal to public.staging_hitlijsten.hl_artiest 
+If there is a match than assign public.song_spelling.fd_tag_tile to public.staging_hitlijsten.fd_tag_title. 
+The button "Altspelling" should now not be displayed 
+2. if there is no a match found with public.song_spelling than
+check if the song exists in file_details:
+public.song_spelling.hl_titel_song is equal to public.staging_hitlijsten.hl_titel_song
+public.song_spelling.hl_artist_key is equal to public.staging_hitlijsten.fd_artist_key
+This means that "SongSpelling" can only be clicked after "ArtistSpelling" has been clicked and the function behind it has been executed 
+If there is a match, than assign file_details.fd_tag_title to public.staging_hitlijsten.fd_tag_title
+The button "Altspelling" should now not be displayed 
+In case the situations under point 1 and 2 here above result in a fail, meaning that fd_tag_title is not found 
+Assign public.staging_hitlijsten.hl_titel_song to public.staging_hitlijsten.fd_tag_title. 
+Show the button "AltSpelling" in the row.
+
+
+-- Table: public.file_details
+
+-- DROP TABLE IF EXISTS public.file_details;
+
+CREATE TABLE IF NOT EXISTS public.file_details
+(
+    fd_correct_artist citext COLLATE pg_catalog."default",
+    fd_tag_title citext COLLATE pg_catalog."default",
+    fd_file_name text COLLATE pg_catalog."default",
+    fd_hitlijst citext COLLATE pg_catalog."default",
+    fd_duration interval,
+    fd_action text COLLATE pg_catalog."default",
+    fd_song_type_key integer,
+    fd_entry_added text COLLATE pg_catalog."default",
+    fd_discogs text COLLATE pg_catalog."default",
+    fd_year_song_publish bigint,
+    fd_year_song_version bigint,
+    fd_entry_modified timestamp without time zone,
+    fd_artist_key integer,
+    fd_key bigint NOT NULL GENERATED BY DEFAULT AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
+    CONSTRAINT file_details_pkey PRIMARY KEY (fd_key),
+    CONSTRAINT file_details_fd_artist_key_fkey FOREIGN KEY (fd_artist_key)
+        REFERENCES public.artist (ar_artist_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT file_details_fd_hitlijst_fkey FOREIGN KEY (fd_hitlijst)
+        REFERENCES public.song_location (sl_location_desc) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT file_details_fd_song_type_key_fkey FOREIGN KEY (fd_song_type_key)
+        REFERENCES public.song_types (st_song_type_key) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.file_details
+    OWNER to postgres;
+-- Index: ix_file_details_fd_artist_key
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_artist_key;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_artist_key
+    ON public.file_details USING btree
+    (fd_artist_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: ix_file_details_fd_hitlijst
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_hitlijst;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_hitlijst
+    ON public.file_details USING btree
+    (fd_hitlijst COLLATE pg_catalog."default" ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: ix_file_details_fd_song_type_key
+
+-- DROP INDEX IF EXISTS public.ix_file_details_fd_song_type_key;
+
+CREATE INDEX IF NOT EXISTS ix_file_details_fd_song_type_key
+    ON public.file_details USING btree
+    (fd_song_type_key ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+    -- Table: public.staging_hitlijsten
+
+-- DROP TABLE IF EXISTS public.staging_hitlijsten;
+
+CREATE TABLE IF NOT EXISTS public.staging_hitlijsten
+(
+    hl_hitlijst citext COLLATE pg_catalog."default",
+    hl_uitzendjaar integer,
+    hl_titel_song citext COLLATE pg_catalog."default",
+    hl_artiest citext COLLATE pg_catalog."default",
+    hl_positie integer,
+    hl_jaar integer,
+    fd_tag_title citext COLLATE pg_catalog."default",
+    as_correcte_artiest_spelling character varying(150) COLLATE pg_catalog."default",
+    hl_discogs_link text COLLATE pg_catalog."default",
+    hl_find_cmd character varying(255) COLLATE pg_catalog."default",
+    hl_artist_key integer,
+    hl_import_run_id uuid
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.staging_hitlijsten
+    OWNER to postgres;
+-- Index: idx_staging_hitlijst_year
+
+-- DROP INDEX IF EXISTS public.idx_staging_hitlijst_year;
+
+CREATE INDEX IF NOT EXISTS idx_staging_hitlijst_year
+    ON public.staging_hitlijsten USING btree
+    (hl_hitlijst COLLATE pg_catalog."default" ASC NULLS LAST, hl_uitzendjaar ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: idx_staging_import_run
+
+-- DROP INDEX IF EXISTS public.idx_staging_import_run;
+
+CREATE INDEX IF NOT EXISTS idx_staging_import_run
+    ON public.staging_hitlijsten USING btree
+    (hl_import_run_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+    -- Table: public.song_spelling
+
+-- DROP TABLE IF EXISTS public.song_spelling;
+
+CREATE TABLE IF NOT EXISTS public.song_spelling
+(
+    hl_titel_song citext COLLATE pg_catalog."default" NOT NULL,
+    hl_artiest citext COLLATE pg_catalog."default" NOT NULL,
+    fd_tag_title character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    song_spelling_key bigint NOT NULL DEFAULT nextval('song_spelling_song_spelling_key_seq'::regclass),
+    CONSTRAINT song_spelling_pkey PRIMARY KEY (song_spelling_key),
+    CONSTRAINT song_spelling_title_artist_unique UNIQUE (hl_titel_song, hl_artiest)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.song_spelling
+    OWNER to postgres;
+-- Index: song_spelling_title_artist_idx
+
+-- DROP INDEX IF EXISTS public.song_spelling_title_artist_idx;
+
+CREATE INDEX IF NOT EXISTS song_spelling_title_artist_idx
+    ON public.song_spelling USING btree
+    (hl_titel_song COLLATE pg_catalog."default" ASC NULLS LAST, hl_artiest COLLATE pg_catalog."default" ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+
+
+
+
+
+
+==============================================
+
+For future Ref:
+="ln -s " & """" &sl_location_path&"/"&fd_file_name&""""&" "&""""&hl_positie&" - "&fd_file_name&""""
+
+This string represents the "ln" command on MacOs
+
+ln -s "/Volumes/stack/stack/Lijsten/ArrowRock/bron/Queen - Bohemian Rhapsody.flac" "001 - Queen - Bohemian Rhapsody.flac"

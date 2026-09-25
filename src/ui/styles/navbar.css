@@ -1,0 +1,510 @@
+/* /* =========================
+   THEME TOKENS (via body class)
+   ========================= */
+
+/* Base tokens (fallback) */
+.hg {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #38bdf8;
+  --focus: #38bdf8;
+
+  /* Dropdown tokens */
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  /* Search tokens */
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* 1) Slate (dark, gangbaar) */
+.theme-slate {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #38bdf8;
+  --focus: #38bdf8;
+
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* 2) Light (max leesbaar) */
+.theme-light {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --text: #0b1220;
+  --border: rgba(15,23,42,0.14);
+
+  --nav-bg: #ffffff;
+  --nav-text: #0b1220;
+  --nav-hover: rgba(2,6,23,0.06);
+  --accent: #1d4ed8;
+  --focus: #1d4ed8;
+
+  --dd-bg: #ffffff;
+  --dd-text: #0b1220;
+  --dd-border: rgba(15,23,42,0.14);
+  --dd-hover: rgba(2,6,23,0.06);
+  --dd-divider: rgba(15,23,42,0.12);
+
+  --search-outline: rgba(2,6,23,0.65);
+  --search-outline-hover: rgba(2,6,23,0.90);
+}
+
+/* 3) Teal (dark + fris) */
+.theme-teal {
+  --bg: #fffdf5;
+  --panel: #fcfff5;
+  --panel-2: #f6f7f2;
+  --text: #0b1220;
+  --border: rgba(0,0,0,0.10);
+
+  --nav-bg: #0b1320;
+  --nav-text: #f8fafc;
+  --nav-hover: rgba(255,255,255,0.10);
+  --accent: #14b8a6;
+  --focus: #22d3ee;
+
+  --dd-bg: #0b1320;
+  --dd-text: #f8fafc;
+  --dd-border: rgba(255,255,255,0.12);
+  --dd-hover: rgba(255,255,255,0.10);
+  --dd-divider: rgba(255,255,255,0.12);
+
+  --search-outline: rgba(255,255,255,0.75);
+  --search-outline-hover: rgba(255,255,255,0.95);
+}
+
+/* =========================
+   NAVBAR THEME APPLICATION
+   ========================= */
+
+/* Skin navbar via tokens (override Bootstrap) */
+.hg .navbar {
+  background-color: var(--nav-bg) !important;
+}
+
+.hg .navbar .navbar-brand,
+.hg .navbar .nav-link,
+.hg .navbar .navbar-toggler {
+  color: var(--nav-text) !important;
+}
+
+.hg .navbar .nav-link:hover,
+.hg .navbar .nav-link:focus {
+  background: var(--nav-hover);
+  border-radius: 0.5rem;
+}
+
+/* Active: not only color -> underline + weight */
+.hg .navbar .nav-link.active {
+  font-weight: 600;
+  position: relative;
+}
+
+.hg .navbar .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 6px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+/* Focus ring (keyboard) */
+.hg .navbar .nav-link:focus-visible,
+.hg .navbar .btn:focus-visible,
+.hg .navbar .form-control:focus-visible,
+.hg .hg-link:focus-visible,
+.hg .dropdown-item:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Light theme: navbar is light, ensure toggler icon visible */
+.theme-light .navbar .navbar-toggler {
+  border-color: rgba(15,23,42,0.25) !important;
+}
+
+.theme-light .navbar .navbar-toggler-icon {
+  filter: invert(1) grayscale(1) contrast(2);
+}
+
+/* =========================
+   DROPDOWN MENUS (theme-aware)
+   ========================= */
+
+.hg .dropdown-menu {
+  background: var(--dd-bg);
+  color: var(--dd-text);
+  border: 1px solid var(--dd-border);
+}
+
+.hg .dropdown-menu .dropdown-divider {
+  border-top-color: var(--dd-divider);
+}
+
+.hg .dropdown-item {
+  color: var(--dd-text);
+}
+
+.hg .dropdown-item:hover,
+.hg .dropdown-item:focus {
+  background: var(--dd-hover);
+  color: var(--dd-text);
+}
+
+/* Active item uses accent for clarity */
+.hg .dropdown-item.active,
+.hg .dropdown-item:active {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+/* =========================
+   SEARCH (theme-aware)
+   ========================= */
+
+/* Keep search input readable in dark nav */
+.theme-slate .hg-search-input,
+.theme-teal  .hg-search-input {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
+.theme-slate .hg-search-input::placeholder,
+.theme-teal  .hg-search-input::placeholder {
+  color: rgba(255,255,255,0.70);
+}
+
+.theme-slate .hg-search-input:focus,
+.theme-teal  .hg-search-input:focus {
+  background: rgba(255,255,255,0.14);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(56,189,248,0.25); /* subtle */
+}
+
+/* Light theme input */
+.theme-light .hg-search-input {
+  background: #fff;
+}
+
+/* Button outline switches per theme */
+.hg-search-btn {
+  background: transparent;
+  border: 1px solid var(--search-outline);
+  color: var(--nav-text);
+}
+
+.hg-search-btn:hover {
+  border-color: var(--search-outline-hover);
+  color: var(--nav-text);
+}
+
+/* Light theme: nav text is dark, ensure button text stays dark */
+.theme-light .hg-search-btn {
+  color: var(--nav-text);
+}
+
+/* navbar.css */
+
+/* ===== Navbar icon-top layout ===== */
+.navbar-icon-top .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.navbar-icon-top .nav-link i {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.navbar-icon-top .nav-text {
+  font-size: 0.95rem;
+}
+
+/* Badge over icon */
+.icon-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+}
+
+.icon-badge .badge {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.75rem;
+  font-size: 0.7rem;
+}
+
+/* Desktop: icons above text */
+@media (min-width: 992px) {
+  .navbar-icon-top .nav-link {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    min-width: 4.5rem;
+  }
+
+  .navbar-icon-top .nav-link i {
+    font-size: 1.2rem;
+  }
+
+  .navbar-icon-top .nav-text {
+    font-size: 0.85rem;
+  }
+}
+
+/* ===== Clock ===== */
+.clock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+}
+
+.clock {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  position: relative;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,0.10), rgba(255,255,255,0.02)),
+    radial-gradient(circle at center, rgba(0,0,0,0.25), rgba(0,0,0,0.6));
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.35);
+}
+
+/* Minute ticks (subtle) */
+.clock::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255,255,255,0.20) 0deg 1deg,
+      transparent 1deg 6deg
+    );
+  mask: radial-gradient(circle, transparent 0 62%, #000 63%);
+  opacity: 0.7;
+}
+
+.hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(0deg);
+  border-radius: 999px;
+}
+
+.hand.hour {
+  width: 6px;
+  height: 22px;
+  background: rgba(255,255,255,0.9);
+}
+
+.hand.minute {
+  width: 4px;
+  height: 28px;
+  background: rgba(255,255,255,0.85);
+}
+
+.hand.second {
+  width: 2px;
+  height: 30px;
+  background: rgba(255,80,80,0.95);
+}
+
+.clock-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
+}
+
+.clock-digital {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.75);
+  font-variant-numeric: tabular-nums;
+}
+
+/* If navbar is light, digital clock should be dark */
+.theme-light .clock-digital {
+  color: rgba(2, 6, 23, 0.75);
+}
+
+/* ===== Navbar icon-top layout ===== */
+.navbar-icon-top .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.navbar-icon-top .nav-link i {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.navbar-icon-top .nav-text {
+  font-size: 0.95rem;
+}
+
+/* Badge over icon */
+.icon-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+}
+
+.icon-badge .badge {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.75rem;
+  font-size: 0.7rem;
+}
+
+/* Desktop: icons above text */
+@media (min-width: 992px) {
+  .navbar-icon-top .nav-link {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    min-width: 4.5rem;
+  }
+
+  .navbar-icon-top .nav-link i {
+    font-size: 1.2rem;
+  }
+
+  .navbar-icon-top .nav-text {
+    font-size: 0.85rem;
+  }
+}
+
+/* ===== Clock ===== */
+.clock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+}
+
+.clock {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  position: relative;
+  background:
+    radial-gradient(circle at center, rgba(255,255,255,0.10), rgba(255,255,255,0.02)),
+    radial-gradient(circle at center, rgba(0,0,0,0.25), rgba(0,0,0,0.6));
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.12), 0 6px 18px rgba(0,0,0,0.35);
+}
+
+/* Minute ticks */
+.clock::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(255,255,255,0.20) 0deg 1deg,
+      transparent 1deg 6deg
+    );
+  mask: radial-gradient(circle, transparent 0 62%, #000 63%);
+  opacity: 0.7;
+}
+
+.hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(0deg);
+  border-radius: 999px;
+}
+
+.hand.hour {
+  width: 6px;
+  height: 22px;
+  background: rgba(255,255,255,0.9);
+}
+
+.hand.minute {
+  width: 4px;
+  height: 28px;
+  background: rgba(255,255,255,0.85);
+}
+
+.hand.second {
+  width: 2px;
+  height: 30px;
+  background: rgba(255,80,80,0.95);
+}
+
+.clock-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.35);
+}
+
+/* Digital time color is driven by your theme vars in hg.css */
+.clock-digital {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}

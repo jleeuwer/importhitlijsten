@@ -1,0 +1,4 @@
+{
+  "test:sprint2h-y-hotfix4": "node --test tests/static_2h_y_hotfix4_export_multiple_candidates.test.js && vitest run --config vite.config.js tests/models/exportHitlijsten.test.js",
+  "db:migrate:sprint2h-y-hotfix4": "bash scripts/run_2h_y_hotfix4_migration.sh"
+}
