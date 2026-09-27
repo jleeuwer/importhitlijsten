@@ -8,7 +8,7 @@ const path = require('path');
 const packagePath = path.join(process.cwd(), 'package.json');
 const additions = {
   'preflight:2h-w': 'node scripts/preflight_2h_w.js',
-  'test:sprint2h-w': 'node --test tests/static_2h_w_build_startapp_hardening.test.js',
+  'test:sprint2h-w': 'vitest run --config vite.config.js tests/static_2h_w_build_startapp_hardening.test.js',
 };
 
 if (!fs.existsSync(packagePath)) {

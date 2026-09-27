@@ -21,13 +21,11 @@ run_step() {
   echo "[validate-all] npm=$(npm --version 2>/dev/null || echo unavailable)"
   echo "[validate-all] started_at=$(date '+%Y-%m-%d %H:%M:%S')"
 
+  # Eén reproduceerbare validatieketen. test:all bevat alle Vitest-tests
+  # (unit/service/react/static/sprint) plus Playwright E2E.
   run_step "install:all" npm run install:all
   run_step "build:all" npm run build:all
-  run_step "test:sprint2g-d" npm run test:sprint2g-d
-  run_step "test:sprint2g" npm run test:sprint2g
-  run_step "test:sprint2h-a" npm run test:sprint2h-a
-  run_step "test:sprint2h-c" npm run test:sprint2h-c
-  run_step "test:e2e" npm run test:e2e
+  run_step "test:all" npm run test:all
 
   echo ""
   echo "[validate-all] finished_at=$(date '+%Y-%m-%d %H:%M:%S')"

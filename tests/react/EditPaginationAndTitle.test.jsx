@@ -60,18 +60,18 @@ describe("Edit title and pagination", () => {
   it("paginates the song table with selectable page sizes", () => {
     render(<EditPage ctrl={makeCtrl(60)} />);
 
-    expect(screen.getByText(/pagina 1 van 2/i)).toBeInTheDocument();
-    expect(screen.getByText(/regels 1-50 van 60/i)).toBeInTheDocument();
-    expect(screen.getByText("Artist 1")).toBeInTheDocument();
-    expect(screen.queryByText("Artist 60")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/pagina 1 van 2/i);
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/regels 1-50 van 60/i);
+    expect(screen.getAllByText("Artist 1").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Artist 60")).toHaveLength(0);
 
     fireEvent.click(screen.getByRole("button", { name: /volgende/i }));
-    expect(screen.getByText(/pagina 2 van 2/i)).toBeInTheDocument();
-    expect(screen.getByText("Artist 60")).toBeInTheDocument();
-    expect(screen.queryByText("Artist 1")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/pagina 2 van 2/i);
+    expect(screen.getAllByText("Artist 60").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Artist 1")).toHaveLength(0);
 
     fireEvent.change(screen.getByLabelText(/regels per pagina/i), { target: { value: "25" } });
-    expect(screen.getByText(/pagina 1 van 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/regels 1-25 van 60/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/pagina 1 van 3/i);
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/regels 1-25 van 60/i);
   });
 });

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import React from "react";
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { EditMain } from "../../src/ui/pages/EditPage.jsx";
 
@@ -21,7 +21,7 @@ function makeRow(index) {
 }
 
 describe("Edit large run rendering hotfix", () => {
-  it("renders only the first visible page of matching rows initially and shows load more controls", () => {
+  it("renders only the active page of matching rows and navigates with pagination controls", () => {
     const rows = Array.from({ length: 250 }, (_, idx) => makeRow(idx + 1));
     const fdStatusByPos = Object.fromEntries(rows.map((row) => [String(row.hl_positie), { matchCount: 1, effective_title: row.fd_tag_title, source: "fd_tag_title" }]));
 
@@ -56,9 +56,15 @@ describe("Edit large run rendering hotfix", () => {
 
     render(<EditMain ctrl={ctrl} />);
 
-    expect(screen.getByText(/rendering 50 of 250 matching rows/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /load 50 more/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/rijensamenvatting liedjestabel/i)).toHaveTextContent(/Rows: 250.*pagina 1 van 5.*getoond 1-50/i);
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/Pagina 1 van 5.*regels 1-50 van 250/i);
+    expect(screen.getByRole("button", { name: /volgende/i })).toBeInTheDocument();
     expect(screen.getAllByText("Artist 1", { exact: true }).length).toBeGreaterThan(0);
     expect(screen.queryAllByText("Artist 150", { exact: true })).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /volgende/i }));
+    expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/Pagina 2 van 5.*regels 51-100 van 250/i);
+    expect(screen.getAllByText("Artist 51", { exact: true }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("Artist 1", { exact: true })).toHaveLength(0);
   });
 });

@@ -73,7 +73,6 @@ function makeCtrl(overrides = {}) {
     decodeHtmlEntitiesForRun: async () => {},
     runArtistSpelling: async () => {},
     runPatternDelete: async () => {},
-    openPatternSuggestions: async () => {},
     runSongSpelling: async () => {},
     refreshFileDetailsStatus: async () => {},
     loadBlockedDiscogsExportSummary: async () => {},

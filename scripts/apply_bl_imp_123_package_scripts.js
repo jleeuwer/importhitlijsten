@@ -19,7 +19,7 @@ pkg.scripts = pkg.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
 
 const additions = {
   'diagnostics:bl-imp-123': 'bash scripts/run_bl_imp_123_diagnostics.sh',
-  'test:bl-imp-123': 'node --test tests/static_bl_imp_123_diagnostics.test.js'
+  'test:bl-imp-123': 'vitest run --config vite.config.js tests/static_bl_imp_123_diagnostics.test.js'
 };
 
 const changed = [];

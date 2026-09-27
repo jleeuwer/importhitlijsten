@@ -9,6 +9,10 @@ import { z } from "zod";
 // import { fixAmpersandEntities } from "../utils/textFixes.js";
 import { decodeHtmlEntities, repairRecoverableEncoding } from "../utils/textFixes.js";
 import { summarizeImportPatternCandidates } from "../services/patternDiscoveryService.js";
+import { calculateListFingerprint } from "../utils/listFingerprint.js";
+import { findRegistryMatches, registerImportedFileTx } from "../models/import_file_registry.js";
+import fs from "fs/promises";
+import path from "path";
 
 function asInt(v) {
   if (v === null || v === undefined || v === "") return null;
@@ -22,39 +26,50 @@ const csvRowSchema = z.object({
   jaar: z.string().trim().min(1).refine(v => Number.isInteger(Number(v)), "jaar must be an integer")
 });
 
-export async function importHitlijstCsv({ hl_hitlijst, hl_uitzendjaar, omroep_key = null, periode_key = null, filePath, originalFilename }) {
+export async function importHitlijstCsv({ hl_hitlijst, hl_uitzendjaar, omroep_key = null, periode_key = null, filePath, originalFilename, duplicateOverride = false, sourceDirectory = null }) {
   const fileHash = await sha256File(filePath);
 
   logger.info("Import inputs", { filePath, originalFilename, hl_hitlijst, hl_uitzendjaar, omroep_key, periode_key, fileHash });
 
-  // 1) Duplicate check
+  // 1) Read, fingerprint and resolve duplicate state before starting the transaction.
+  const parsedCsv = await readCsvRows(filePath);
+  const fingerprint = calculateListFingerprint(parsedCsv.rows);
+  const registryMatches = await findRegistryMatches({
+    fileSha256: fileHash,
+    listFingerprint: fingerprint.listFingerprint
+  });
   const existing = await findRunByHash({
     fileHash,
     hl_hitlijst,
     hl_uitzendjaar: asInt(hl_uitzendjaar)
   });
+  const duplicateRegistry = registryMatches.fileMatch ?? registryMatches.listMatch ?? null;
 
-  if (existing) {
+  if ((existing || duplicateRegistry) && !duplicateOverride) {
     return {
       alreadyImported: true,
-      existingRun: existing,
+      duplicateRequiresOverride: true,
+      duplicateMatchType: registryMatches.fileMatch ? "EXACT_FILE" : "SAME_LIST_CONTENT",
+      existingRun: existing ?? (duplicateRegistry?.ifr_import_run_id ? { ir_run_id: duplicateRegistry.ifr_import_run_id } : null),
+      existingRegistry: duplicateRegistry,
       summary: {
-        message: "This file was already imported for this hitlijst/year.",
+        message: registryMatches.fileMatch
+          ? "Exact hetzelfde CSV-bestand is al geregistreerd als geïmporteerd."
+          : "Dezelfde hitlijstinhoud is al eerder geïmporteerd. Bevestig expliciet als je opnieuw wilt importeren.",
         hl_hitlijst,
         hl_uitzendjaar,
         fileHash,
-        totalRows: 0,
+        listFingerprint: fingerprint.listFingerprint,
+        totalRows: parsedCsv.rows.length,
         inserted: 0,
-        warnings: 0,
+        warnings: 1,
         errors: 0
       },
-      rows: await findByRunId(existing.ir_run_id)
+      rows: existing ? await findByRunId(existing.ir_run_id) : []
     };
   }
 
-  // 2) Read & normalize CSV (outside tx is fine)
-  const parsedCsv = await readCsvRows(filePath);
-  logger.info("CSV detected", { delimiter: parsedCsv.delimiter, headers: parsedCsv.headers, rowCount: parsedCsv.rows.length, encodingUsed: parsedCsv.encodingUsed, decodeScores: parsedCsv.decodeScores });
+  logger.info("CSV detected", { delimiter: parsedCsv.delimiter, headers: parsedCsv.headers, rowCount: parsedCsv.rows.length, encodingUsed: parsedCsv.encodingUsed, decodeScores: parsedCsv.decodeScores, listFingerprint: fingerprint.listFingerprint });
 
   const client = await pool.connect();
   const runId = crypto.randomUUID();
@@ -67,6 +82,8 @@ export async function importHitlijstCsv({ hl_hitlijst, hl_uitzendjaar, omroep_ke
     hl_uitzendjaar,
     originalFilename,
     fileHash,
+    listFingerprint: fingerprint.listFingerprint,
+    duplicateOverride: !!duplicateOverride,
     totalRows: parsedCsv.rows.length,
     inserted: 0,
     warnings: 0,
@@ -158,6 +175,19 @@ export async function importHitlijstCsv({ hl_hitlijst, hl_uitzendjaar, omroep_ke
 
     const patternDiscoverySummary = summarizeImportPatternCandidates(importedTitlesForPatternDiscovery);
     summary.patternDiscovery = patternDiscoverySummary;
+
+    const stat = await fs.stat(filePath);
+    await registerImportedFileTx(client, {
+      fileName: originalFilename || path.basename(filePath),
+      directoryPath: sourceDirectory || path.dirname(filePath),
+      fileSize: stat.size,
+      fileModifiedAt: stat.mtime,
+      fileSha256: fileHash,
+      listFingerprint: fingerprint.listFingerprint,
+      importRunId: runId,
+      duplicateOverride: !!duplicateOverride,
+      duplicateOfRegistryKey: duplicateRegistry?.ifr_key ?? null
+    });
 
     await client.query("COMMIT");
   } catch (e) {

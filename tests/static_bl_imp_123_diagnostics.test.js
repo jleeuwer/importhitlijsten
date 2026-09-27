@@ -1,4 +1,5 @@
-import test from "node:test";
+/** @vitest-environment node */
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -78,5 +79,5 @@ test("BL-IMP-123 package updater safely adds npm scripts", () => {
   const fragment = JSON.parse(read(packageFragmentPath));
   assert.match(updater, /Refusing to overwrite existing script/);
   assert.equal(fragment.scripts["diagnostics:bl-imp-123"], "bash scripts/run_bl_imp_123_diagnostics.sh");
-  assert.equal(fragment.scripts["test:bl-imp-123"], "node --test tests/static_bl_imp_123_diagnostics.test.js");
+  assert.equal(fragment.scripts["test:bl-imp-123"], "vitest run --config vite.config.js tests/static_bl_imp_123_diagnostics.test.js");
 });

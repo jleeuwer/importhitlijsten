@@ -30,10 +30,10 @@ tests/static_2h_x_edit_table_polish.test.js
 tests/react/EditTablePolish.test.jsx
 ```
 
-Uitgevoerd in deze bouwomgeving:
+De statische regressiecheck is inmiddels opgenomen in de uniforme Vitest-suite:
 
-```text
-node --test tests/static_2h_x_edit_table_polish.test.js
+```bash
+npm run test:sprint2h-x
 ```
 
 Resultaat:
@@ -61,7 +61,7 @@ scripts/apply_sprint2h_x_noop_migration.sh
 Uitvoeren:
 
 ```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=muziek POSTGRES_USER=postgres npm run db:migrate:sprint2h-x
+POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-x
 ```
 
 ## Niet gewijzigd

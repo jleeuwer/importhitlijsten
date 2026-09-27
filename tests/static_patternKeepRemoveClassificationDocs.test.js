@@ -41,7 +41,7 @@ describe('Sprint 2H-S pattern keep/remove classification documentation', () => {
 
   it('keeps functional testcases ready for future automated test development and exposes the sprint script', () => {
     const testPlan = read('TEST_PLAN.md');
-    const latest = read('laatstesprint.md');
+    const sprint = read('docs/sprint-2h/SPRINT_2H_S_PATTERN_KEEP_REMOVE_CLASSIFICATION.md');
     const pkg = JSON.parse(read('package.json'));
 
     expect(testPlan).toContain('2H-S-01');
@@ -50,7 +50,8 @@ describe('Sprint 2H-S pattern keep/remove classification documentation', () => {
     expect(testPlan).toContain('Titelonderdeel toevoegen');
     expect(testPlan).toContain('Schema guard');
 
-    expect(latest).toContain('2H-S — BL-IMP-118 Pattern discovery keep/remove classification');
+    expect(sprint).toContain('Sprint 2H-S — Pattern discovery keep/remove classification');
+    expect(sprint).toContain('BL-IMP-118 — Pattern discovery: keep/remove classification voor haakjespatronen');
     expect(pkg.scripts['test:sprint2h-s']).toContain('tests/services_patternDiscoveryService.test.js');
     expect(pkg.scripts['test:sprint2h-s']).toContain('tests/static_patternKeepRemoveClassificationCode.test.js');
     expect(pkg.scripts['test:sprint2h-s']).toContain('tests/react/EditPatternKeepRemoveClassification.test.jsx');

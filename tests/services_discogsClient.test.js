@@ -6,6 +6,7 @@ import {
   getDiscogsDetails,
   normalizeDiscogsDetailPayload,
   normalizeDiscogsSearchResult,
+  parsePositiveNumberConfig,
   searchDiscogs
 } from "../services/discogsClient.js";
 
@@ -15,6 +16,13 @@ beforeEach(() => {
 });
 
 describe("Discogs client", () => {
+  it("falls back to finite positive timeout/cache configuration values", () => {
+    expect(parsePositiveNumberConfig("undefined", 10000)).toBe(10000);
+    expect(parsePositiveNumberConfig("NaN", 10000)).toBe(10000);
+    expect(parsePositiveNumberConfig("0", 10000)).toBe(10000);
+    expect(parsePositiveNumberConfig("2500", 10000)).toBe(2500);
+  });
+
   it("builds an unfiltered search query from artist and title by default", () => {
     expect(buildDiscogsSearchParams({ artist: "Nirvana", title: "Smells Like Teen Spirit" })).toEqual({
       q: "Nirvana Smells Like Teen Spirit",

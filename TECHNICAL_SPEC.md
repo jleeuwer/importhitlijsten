@@ -1,4 +1,6 @@
-# Technical Spec — Sprint 2H-S
+# Technical Spec — actuele baseline 2H-Z Hotfix 3
+
+> De oorspronkelijke 2H-S technische specificatie blijft hieronder behouden als historische baseline.
 
 ## Database
 
@@ -76,3 +78,20 @@ tests/static_patternKeepRemoveClassificationCode.test.js
 tests/static_patternDiscoveryRoutes.test.js
 tests/react/EditPatternKeepRemoveClassification.test.jsx
 ```
+
+---
+
+## 2H-Z Hotfix 2 — technische aanvulling
+BL-IMP-136 is geïmplementeerd in `services/stagingDuplicateRowService.js` en `src/ui/components/StagingDuplicateReview.jsx`. De migratie voegt `staging_hitlijsten.sh_key` en `staging_hitlijsten_delete_audit` toe. API-endpoints onder `/api/edit/run/:runId/staging-duplicates` leveren scan, Skip en fysieke delete. Physical delete wordt binnen één database-transactie geaudit, uitgevoerd en gevolgd door synchronisatie van `import_runs.ir_row_count`.
+
+
+---
+
+## 2H-Z Hotfix 3 — technische aanvulling
+
+- Legacy `node:test` suites zijn geconverteerd naar Vitest met `@vitest-environment node` voor niet-DOM tests.
+- Package scripts en package-updaters gebruiken geen `node --test` meer.
+- `StagingResults.jsx` gebruikt echte `<a href>` elementen voor navigatieacties.
+- `EditPage.jsx` biedt stabiele aria-labels voor rijensamenvatting en paginastatus.
+- `discogsClient.js` gebruikt `parsePositiveNumberConfig` om NaN/0/ongeldige timeout- en cachewaarden af te vangen.
+- HF3 heeft geen nieuwe database-migratie.

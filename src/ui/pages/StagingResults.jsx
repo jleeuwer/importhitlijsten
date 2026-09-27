@@ -385,28 +385,22 @@ export default function StagingResults({ initialState }) {
                     <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.ir_run_id}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
                       <div className="d-flex gap-1 align-items-center" aria-label={`Acties voor ${r.ir_hitlijst} ${r.ir_uitzendjaar}`}>
-                        <Button
-                          as="a"
+                        <a
                           href={`/staging?runId=${encodeURIComponent(r.ir_run_id)}`}
-                          variant="outline-secondary"
-                          size="sm"
-                          className="py-0 px-1"
+                          className="btn btn-outline-secondary btn-sm py-0 px-1"
                           title="View staging"
                           aria-label={`View staging voor ${r.ir_hitlijst} ${r.ir_uitzendjaar}`}
                         >
                           <i className="bi bi-view-list" aria-hidden="true"></i>
-                        </Button>
-                        <Button
-                          as="a"
+                        </a>
+                        <a
                           href={`/edit?runId=${encodeURIComponent(r.ir_run_id)}`}
-                          variant="outline-primary"
-                          size="sm"
-                          className="py-0 px-1"
+                          className="btn btn-outline-primary btn-sm py-0 px-1"
                           title="Open Edit"
                           aria-label={`Open Edit voor ${r.ir_hitlijst} ${r.ir_uitzendjaar}`}
                         >
                           <i className="bi bi-pencil" aria-hidden="true"></i>
-                        </Button>
+                        </a>
                         <Button
                           variant="outline-secondary"
                           size="sm"
@@ -418,17 +412,14 @@ export default function StagingResults({ initialState }) {
                           <i className="bi bi-list" aria-hidden="true"></i>
                         </Button>
                         {asInt(r.blocked_discogs_count) > 0 && (
-                          <Button
-                            as="a"
+                          <a
                             href={`/api/edit/run/${encodeURIComponent(r.ir_run_id)}/export-blocked-discogs-links.txt`}
-                            variant="outline-secondary"
-                            size="sm"
-                            className="py-0 px-1"
+                            className="btn btn-outline-secondary btn-sm py-0 px-1"
                             title="Blocked Discogs export"
                             aria-label={`Blocked Discogs export voor ${r.ir_hitlijst} ${r.ir_uitzendjaar}`}
                           >
                             <i className="bi bi-file-earmark-text" aria-hidden="true"></i>
-                          </Button>
+                          </a>
                         )}
                         <Button
                           variant="outline-danger"

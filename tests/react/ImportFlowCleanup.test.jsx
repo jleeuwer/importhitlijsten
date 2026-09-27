@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import App from "../../src/ui/App.jsx";
 import ImportPage from "../../src/ui/pages/ImportPage.jsx";
@@ -27,7 +27,7 @@ describe("Sprint 2G-F import/edit flow cleanup", () => {
     vi.unstubAllGlobals();
   });
 
-  it("removes the standalone Edit entry from the left navigation and nav config", () => {
+  it("removes the standalone Edit entry from the left navigation and nav config", async () => {
     expect(NAV_ITEMS.map((item) => item.key)).not.toContain("edit");
 
     render(<App initialState={{ page: "stagingResults", runs: [], dbHealth: { ok: true } }} />);
@@ -38,13 +38,17 @@ describe("Sprint 2G-F import/edit flow cleanup", () => {
     expect(sidebar).toHaveTextContent("String patterns");
     expect(sidebar).not.toHaveTextContent(/^Edit$/i);
     expect(sidebar.querySelector('a[href="/edit"]')).not.toBeInTheDocument();
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith("/api/db-health"));
+    await waitFor(() => expect(screen.getByText(/DB OK/i)).toBeInTheDocument());
   });
 
-  it("removes obsolete aside instruction that sends users to bare Edit", () => {
+  it("removes obsolete aside instruction that sends users to bare Edit", async () => {
     render(<App initialState={{ page: "stagingResults", runs: [], dbHealth: { ok: true } }} />);
 
     expect(screen.queryByText(/Use Edit to run tools on a runId/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Kies een import-run/i)).toBeInTheDocument();
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith("/api/db-health"));
+    await waitFor(() => expect(screen.getByText(/DB OK/i)).toBeInTheDocument());
   });
 
   it("hides generic Edit mode button before import success", () => {

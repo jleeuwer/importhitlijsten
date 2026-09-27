@@ -2,7 +2,7 @@
 set -euo pipefail
 
 POSTGRES_CONTAINER="${POSTGRES_CONTAINER:-my-postgresdb}"
-POSTGRES_DB="${POSTGRES_DB:-muziek}"
+POSTGRES_DB="${POSTGRES_DB:-musicdb}"
 POSTGRES_USER="${POSTGRES_USER:-postgres}"
 SQL_FILE="scripts/sql/20260830_sprint2h_x_no_database_migration.sql"
 

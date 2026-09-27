@@ -1,6 +1,7 @@
+/** @vitest-environment node */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import test from "node:test";
+import { test } from "vitest";
 
 const editPage = readFileSync("src/ui/pages/EditPage.jsx", "utf8");
 const functionalSpec = readFileSync("docs/functional/FUNCTIONAL_SPEC_2H_X_EDIT_TABLE_POLISH.md", "utf8");

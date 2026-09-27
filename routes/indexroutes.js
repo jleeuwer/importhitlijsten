@@ -46,9 +46,11 @@ import { getDiscogsDetails, searchDiscogs } from "../services/discogsClient.js";
 import { saveDiscogsSelectionForStagingRow } from "../services/discogsSelectionService.js";
 import { exportBlockedDiscogsLinksForRun, getBlockedDiscogsExportSummary } from "../services/blockedDiscogsExportService.js";
 import { getDuplicateImportSummary, markDuplicateImportRowsAsSkip } from "../services/duplicateImportService.js";
+import { getStagingDuplicateReview, markSelectedStagingDuplicatesAsSkip, physicallyDeleteSelectedStagingDuplicates } from "../services/stagingDuplicateRowService.js";
 import { assertPreExportActionAllowed } from "../services/exportWorkflowGuardService.js";
 import { addPatternsToStringDelPatterns, addPatternsToStringKeepPatterns, getPatternSuggestionsForRun, previewPatternSuggestionsForRun } from "../services/patternDiscoveryService.js";
 import { logger } from "../config/logger.js";
+import { scanImportDirectory, markFileAsAlreadyImported, unmarkFileAsAlreadyImported, assertCsvPathInsideDirectory } from "../services/importFileRegistryService.js";
 
 export const router = express.Router();
 
@@ -122,6 +124,14 @@ function routeDebugError(route, startedAt, error, extra = {}) {
 /* --------------------------
    Validation schemas
 -------------------------- */
+
+const stagingDuplicateSelectionSchema = z.object({
+  stagingKeys: z.array(z.coerce.number().int().positive()).min(1).max(5000)
+});
+
+const stagingDuplicatePhysicalDeleteSchema = stagingDuplicateSelectionSchema.extend({
+  confirmPhysicalDelete: z.literal(true)
+});
 
 const importBodySchema = z.object({
   hl_hitlijst: z.string().trim().min(1).max(255),
@@ -296,6 +306,64 @@ router.post("/api/edit/run/:runId/duplicates/skip", async (req, res, next) => {
   }
 });
 
+router.get("/api/edit/run/:runId/staging-duplicates", async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const runId = String(req.params.runId || "").trim();
+    if (!runId) return res.status(400).json({ error: "runId is required" });
+    const review = await getStagingDuplicateReview(client, runId);
+    return res.json({ ok: true, runId, ...review });
+  } catch (e) {
+    next(e);
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/api/edit/run/:runId/staging-duplicates/skip", async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const runId = String(req.params.runId || "").trim();
+    if (!runId) return res.status(400).json({ error: "runId is required" });
+    await assertPreExportActionAllowed(runId);
+    const parsed = stagingDuplicateSelectionSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join("; ") });
+    }
+    await client.query("BEGIN");
+    const result = await markSelectedStagingDuplicatesAsSkip(client, runId, parsed.data.stagingKeys);
+    await client.query("COMMIT");
+    return res.json(result);
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch { /* ignore rollback failure */ }
+    next(e);
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/api/edit/run/:runId/staging-duplicates/delete", async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const runId = String(req.params.runId || "").trim();
+    if (!runId) return res.status(400).json({ error: "runId is required" });
+    await assertPreExportActionAllowed(runId);
+    const parsed = stagingDuplicatePhysicalDeleteSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues.map((i) => i.message).join("; ") });
+    }
+    await client.query("BEGIN");
+    const result = await physicallyDeleteSelectedStagingDuplicates(client, runId, parsed.data.stagingKeys);
+    await client.query("COMMIT");
+    return res.json(result);
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch { /* ignore rollback failure */ }
+    next(e);
+  } finally {
+    client.release();
+  }
+});
+
 router.get("/api/edit/run/:runId/blocked-discogs-export-summary", async (req, res, next) => {
   const client = await pool.connect();
   try {
@@ -418,11 +486,41 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/import", async (req, res) => {
-  const dbHealth = await healthCheck();
-  const metadataOptions = await getMetadataOptions();
-  const state = { page: "import", summary: null, rows: [], defaults: {}, dbHealth, metadataOptions };
-  return renderPage(req, res, { title: "Import Hitlijst CSV", state });
+router.get("/import", async (req, res, next) => {
+  try {
+    const dbHealth = await healthCheck();
+    const metadataOptions = await getMetadataOptions();
+    const directoryPath = String(req.query.directory || "").trim();
+    const showImported = String(req.query.showImported || "") === "1";
+    const selectedFile = String(req.query.selectedFile || "").trim();
+    let directoryScan = null;
+    let directoryError = null;
+
+    if (directoryPath) {
+      try {
+        directoryScan = await scanImportDirectory(directoryPath, { showImported });
+      } catch (error) {
+        directoryError = { code: error.code || "READ_ERROR", message: error.message };
+      }
+    }
+
+    const state = {
+      page: "import",
+      summary: null,
+      rows: [],
+      defaults: {},
+      dbHealth,
+      metadataOptions,
+      directoryPath,
+      showImported,
+      selectedFile,
+      directoryScan,
+      directoryError
+    };
+    return renderPage(req, res, { title: "Import Hitlijst CSV", state });
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/edit", async (req, res) => {
@@ -461,7 +559,16 @@ router.get("/string-patterns", async (req, res) => {
 
 router.post("/import", uploadCsv.single("csvFile"), async (req, res, next) => {
   try {
-    if (!req.file?.path) throw new Error("No CSV file uploaded.");
+    const sourceDirectory = String(req.body.sourceDirectory || "").trim();
+    const sourceFilePathRaw = String(req.body.sourceFilePath || "").trim();
+    let filePath = req.file?.path || null;
+    let originalFilename = req.file?.originalname || null;
+
+    if (!filePath && sourceDirectory && sourceFilePathRaw) {
+      filePath = assertCsvPathInsideDirectory(sourceDirectory, sourceFilePathRaw);
+      originalFilename = filePath.split(/[\\/]/).pop();
+    }
+    if (!filePath) throw new Error("Selecteer een CSV-bestand uit de directory of upload een CSV-bestand.");
 
     const parsed = importBodySchema.safeParse(req.body);
     if (!parsed.success) {
@@ -475,10 +582,12 @@ router.post("/import", uploadCsv.single("csvFile"), async (req, res, next) => {
     const result = await importHitlijstCsv({
       hl_hitlijst,
       hl_uitzendjaar,
-      filePath: req.file.path,
-      originalFilename: req.file.originalname,
+      filePath,
+      originalFilename,
       omroep_key: omroep_key ?? null,
-      periode_key: periode_key ?? null
+      periode_key: periode_key ?? null,
+      duplicateOverride: String(req.body.duplicateOverride || "") === "1",
+      sourceDirectory: sourceDirectory || null
     });
 
     const runId = result.alreadyImported
@@ -494,12 +603,45 @@ router.post("/import", uploadCsv.single("csvFile"), async (req, res, next) => {
       existingRun: result.existingRun ?? null,
       defaults: { hl_hitlijst, hl_uitzendjaar, omroep_key, periode_key },
       metadataOptions: await getMetadataOptions(),
-      dbHealth
+      dbHealth,
+      directoryPath: sourceDirectory,
+      showImported: String(req.body.showImported || "") === "1",
+      selectedFile: originalFilename,
+      selectedFilePath: sourceDirectory ? filePath : null,
+      duplicateRequiresOverride: !!result.duplicateRequiresOverride,
+      duplicateMatchType: result.duplicateMatchType || null,
+      existingRegistry: result.existingRegistry || null
     };
 
     return renderPage(req, res, { title: "Import Hitlijst CSV", state });
   } catch (e) {
     next(e);
+  }
+});
+
+router.post("/import/mark-imported", express.urlencoded({ extended: false }), async (req, res, next) => {
+  try {
+    const directoryPath = String(req.body.directoryPath || "").trim();
+    const fileName = String(req.body.fileName || "").trim();
+    if (!directoryPath || !fileName) return res.status(400).send("directoryPath and fileName are required");
+    await markFileAsAlreadyImported({ directoryPath, fileName });
+    const query = new URLSearchParams({ directory: directoryPath, showImported: String(req.body.showImported || "") === "1" ? "1" : "0" });
+    res.redirect(`/import?${query.toString()}`);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/import/unmark-imported", express.urlencoded({ extended: false }), async (req, res, next) => {
+  try {
+    const registryKey = Number(req.body.registryKey);
+    const directoryPath = String(req.body.directoryPath || "").trim();
+    if (!Number.isInteger(registryKey)) return res.status(400).send("registryKey is required");
+    await unmarkFileAsAlreadyImported(registryKey);
+    const query = new URLSearchParams({ directory: directoryPath, showImported: "1" });
+    res.redirect(`/import?${query.toString()}`);
+  } catch (error) {
+    next(error);
   }
 });
 

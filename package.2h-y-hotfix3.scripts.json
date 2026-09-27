@@ -1,5 +1,5 @@
 {
-  "test:sprint2h-y-hotfix3": "node --test tests/static_2h_y_hotfix3_encoding_cleanup.test.js && vitest run --config vite.config.js tests/services_editEncodingRepairService.test.js tests/services_editManualCorrectionService.test.js",
-  "test:sprint2h-y": "node --test tests/services_2h_y_matchingDiscogsStatusHardening.test.js tests/static_2h_y_matching_discogs_status_hardening.test.js tests/static_2h_y_hotfix3_encoding_cleanup.test.js",
+  "test:sprint2h-y-hotfix3": "vitest run --config vite.config.js tests/static_2h_y_hotfix3_encoding_cleanup.test.js tests/services_editEncodingRepairService.test.js tests/services_editManualCorrectionService.test.js",
+  "test:sprint2h-y": "vitest run --config vite.config.js tests/services_2h_y_matchingDiscogsStatusHardening.test.js tests/static_2h_y_matching_discogs_status_hardening.test.js tests/static_2h_y_hotfix3_encoding_cleanup.test.js",
   "db:migrate:sprint2h-y-hotfix3": "bash scripts/run_2h_y_hotfix3_migration.sh"
 }

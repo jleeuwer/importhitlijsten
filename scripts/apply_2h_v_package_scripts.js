@@ -6,7 +6,7 @@ const scriptsToAdd = {
   'db:migrate:sprint2h-v': 'bash scripts/run_2h_v_migration.sh',
   'repair:2h-v-export-status': 'bash scripts/run_2h_v_export_status_repair.sh --preview',
   'repair:2h-v-export-status:apply': 'bash scripts/run_2h_v_export_status_repair.sh --apply',
-  'test:sprint2h-v': 'node --test tests/services_2h_v_warningStatusHardening.test.js tests/services_2h_v_encodingWarningLifecycle.test.js tests/services_2h_v_exportStatusRepair.test.js tests/static_2h_v_warning_status_hardening.test.js'
+  'test:sprint2h-v': 'vitest run --config vite.config.js tests/services_2h_v_warningStatusHardening.test.js tests/services_2h_v_encodingWarningLifecycle.test.js tests/services_2h_v_exportStatusRepair.test.js tests/static_2h_v_warning_status_hardening.test.js'
 };
 
 if (!fs.existsSync(packageJsonPath)) {

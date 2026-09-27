@@ -22,3 +22,35 @@ npm run db:migrate:sprint2h-s
 npm run test:sprint2h-s
 npm run build
 ```
+
+## 2H-Z Hotfix 2
+Gerichte regressiesuite:
+
+```bash
+npm run test:sprint2h-z-hotfix2
+```
+
+Volledige suite:
+
+```bash
+npm run test:all
+```
+
+Functionele acceptatie volgt `docs/testcases/FUNCTIONAL_TEST_CASES_2H_Z_HOTFIX2_DUPLICATE_ROW_REVIEW.md`.
+
+
+## 2H-Z Hotfix 3
+
+Gerichte regressiesuite:
+
+```bash
+npm run test:sprint2h-z-hotfix3
+```
+
+Volledige suite:
+
+```bash
+./startapp.sh test
+```
+
+De functionele cases HF3-01 t/m HF3-12 staan in `docs/testcases/FUNCTIONAL_TEST_CASES_2H_Z_HOTFIX3_TEST_SUITE_HARDENING.md`. Belangrijkste dekking: Vitest-unificatie, actuele paginering, row-scoped duplicate/inbox assertions, link-accessibility, Discogs config fallback en `musicdb` documentatie.

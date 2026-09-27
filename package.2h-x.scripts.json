@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test:sprint2h-x": "node --test tests/static_2h_x_edit_table_polish.test.js && vitest run --config vite.config.js tests/react/EditTablePolish.test.jsx",
+    "test:sprint2h-x": "vitest run --config vite.config.js tests/static_2h_x_edit_table_polish.test.js tests/react/EditTablePolish.test.jsx",
     "db:migrate:sprint2h-x": "bash scripts/apply_sprint2h_x_noop_migration.sh"
   }
 }

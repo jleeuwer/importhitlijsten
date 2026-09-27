@@ -8,13 +8,19 @@ const LOG_CONTEXT = { module: "importhitlijst", feature: "discogs" };
 
 const cache = new Map();
 
+
+export function parsePositiveNumberConfig(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 function getConfig() {
   return {
     baseUrl: process.env.DISCOGS_BASE_URL || DEFAULT_BASE_URL,
     userToken: process.env.DISCOGS_USER_TOKEN || "",
     userAgent: process.env.DISCOGS_USER_AGENT || "Importhitlijst/2G-B1 local-dev",
-    timeoutMs: Number(process.env.DISCOGS_REQUEST_TIMEOUT_MS || DEFAULT_TIMEOUT_MS),
-    cacheTtlMs: Number(process.env.DISCOGS_CACHE_TTL_SECONDS || DEFAULT_CACHE_TTL_SECONDS) * 1000
+    timeoutMs: parsePositiveNumberConfig(process.env.DISCOGS_REQUEST_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
+    cacheTtlMs: parsePositiveNumberConfig(process.env.DISCOGS_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) * 1000
   };
 }
 

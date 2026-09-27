@@ -9,6 +9,6 @@ mkdir -p logs
 echo "[install-all] Installing root/backend/frontend dependencies"
 echo "[install-all] root=$ROOT_DIR"
 
-npm install
+npm ci
 
 echo "[install-all] Done"

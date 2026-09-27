@@ -29,7 +29,7 @@ POSTGRES_CONTAINER=my-postgresdb
 Voorbeeldrichting:
 
 ```bash
-docker exec -i my-postgresdb psql -U postgres -d muziek < scripts/sql/<migration>.sql
+docker exec -i my-postgresdb psql -U postgres -d musicdb < scripts/sql/<migration>.sql
 ```
 
 De exacte database, user en database naam moeten aansluiten op het project `.env` of bestaande scripts.

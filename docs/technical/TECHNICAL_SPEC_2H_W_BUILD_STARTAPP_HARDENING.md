@@ -137,7 +137,7 @@ install build validate test dev
 ```json
 {
   "preflight:2h-w": "node scripts/preflight_2h_w.js",
-  "test:sprint2h-w": "node --test tests/static_2h_w_build_startapp_hardening.test.js"
+  "test:sprint2h-w": "vitest run --config vite.config.js tests/static_2h_w_build_startapp_hardening.test.js"
 }
 ```
 

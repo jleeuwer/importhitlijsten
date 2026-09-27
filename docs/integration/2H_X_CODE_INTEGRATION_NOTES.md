@@ -71,7 +71,7 @@ scripts/apply_sprint2h_x_noop_migration.sh
 Docker/PostgreSQL uitvoering:
 
 ```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=muziek POSTGRES_USER=postgres npm run db:migrate:sprint2h-x
+POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-x
 ```
 
 Pas `POSTGRES_DB` en `POSTGRES_USER` aan als de lokale installatie andere waarden gebruikt.

@@ -1,147 +1,84 @@
-# Importhitlijst — Sprint 2H-Y codebouw
+# Import Hitlijsten — 2H-Z Hotfix 3 / v1.1.0
 
-Deze ZIP bevat de volledige Importhitlijst-codebase, gebaseerd op de geaccepteerde 2H-X codebase en uitgebreid met Sprint 2H-Y.
+Deze volledige codebase bevat Sprint **2H-Z — CSV Import Registry & Exact Duplicate Detection**, Hotfix 1 voor de import-inbox UX, Hotfix 2 voor **post-import duplicate row review** en Hotfix 3 voor **test-suite hardening**.
 
-## Sprint
+De applicatieversie blijft **1.1.0**, gelijk aan de documentatiesprint. De 2H-Z releasecandidate is nog niet geaccepteerd; daarom wordt geen nieuwe SemVer geïntroduceerd.
 
-**2H-Y — Matching, Discogs lifecycle & status hardening**
-
-## Backlog-items
-
-- **BL-IMP-124** — Ambigue `file_details`-kandidaten blokkeren.
-- **BL-IMP-133** — Discogs-link lifecycle expliciet maken.
-- **BL-IMP-127** — Variant-aware matching/deduplicate ontwerp.
-- **BL-IMP-128** — Encoding repair mag geen manual free overwrite triggeren zonder expliciete bevestiging.
-- **BL-IMP-129** — Exportstatus correct bij succesvolle export met niet-blokkerende warnings.
-- **BL-IMP-130** — Encoding warning herberekenen/verwijderen na handmatige correctie.
-- **BL-IMP-131** — Repair bestaande geëxporteerde runs met foutieve aandacht-nodig status.
-
-## Functioneel gedrag
-
-- Export blokkeert nu als een stagingregel meerdere mogelijke `file_details`-kandidaten heeft.
-- Variant-aware matching gebruikt `hl_desired_song_type_key` als extra vernauwing wanneer die gevuld is.
-- De export kiest niet meer stilzwijgend de eerste kandidaat wanneer er meerdere matches zijn.
-- Discogs-links blijven hitlijstmetadata en worden niet automatisch naar `file_details.fd_discogs` gepromoveerd.
-- Safe raw `hl_discogs_link` waarden naar `https://discogs.com/master/...` of `https://discogs.com/release/...` worden bij export als gestructureerde `hitlijsten.discogs_master_url` of `hitlijsten.discogs_release_url` meegenomen.
-- Encoding/text batch-repair bevestigt intern expliciet dat de geautomatiseerde actie bewust overschrijft, zodat de manual-overwrite guard niet onbedoeld als stacktrace in beeld komt.
-- API-fouten onder `/api/*` geven JSON terug in plaats van development stacktraces.
-- 2H-V status-/repair-tabellen worden hergebruikt; 2H-Y voegt geen destructieve schemawijziging toe.
-
-## Database / Docker PostgreSQL
-
-Er is geen destructieve database-migratie nodig. Er is wel een veilige 2H-Y marker/comment migration toegevoegd voor releasebeheer en documentatie in de database.
+## Installeren
 
 ```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-y
+npm ci
 ```
 
-Als jouw database lokaal `muziek` heet, gebruik dan:
+## Database
+
+Voor een omgeving die 2H-Z nog niet heeft:
 
 ```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=muziek POSTGRES_USER=postgres npm run db:migrate:sprint2h-y
+POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-z
 ```
 
-## Diagnostiek
-
-Voor een specifieke run:
+Daarna voor Hotfix 2:
 
 ```bash
-RUN_ID=<uuid> POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run diagnostics:sprint2h-y
+POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-z-hotfix2
 ```
 
-Of:
-
-```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres bash scripts/run_2h_y_diagnostics.sh <uuid>
-```
+Hotfix 3 heeft **geen nieuwe database-migratie**.
 
 ## Testen
 
 ```bash
-npm run test:sprint2h-y
+./startapp.sh test
 ```
 
-De testset bevat pure service-tests en statische broncodechecks voor de 2H-Y regels.
-
-## Handmatige smoke-test
-
-1. Start de app.
-2. Kies een import-run met bekende meerdere `file_details`-matches.
-3. Controleer `/api/run-export-hitlijsten-status?runId=<uuid>`.
-4. Verwacht `MULTIPLE_FILE_DETAILS_COMBINED_MATCHES` in `issuesPreview` en een geblokkeerde export.
-5. Vul/controleer gewenste songtype/variant zodat exact één kandidaat overblijft.
-6. Controleer dat export daarna doorgaat.
-7. Controleer dat Discogs-linkmetadata in `hitlijsten.discogs_master_url` of `hitlijsten.discogs_release_url` terechtkomt en niet automatisch in `file_details.fd_discogs`.
-
-## Hotfix validate 2026-09-07 13:19
-
-De validate-log liet drie failures zien in `tests/models/exportHitlijsten.test.js`. De applicatiecode blokkeerde terecht op `MULTIPLE_FILE_DETAILS_COMBINED_MATCHES`, maar de oudere 2G-D tests verwachtten nog dat ambiguë combined matches als waarschuwing werden behandeld en export toch door mocht gaan. Deze testverwachtingen zijn bijgewerkt naar het nieuwe BL-IMP-124 gedrag.
-
-Controle na copy-over:
+Dit voert uit:
 
 ```bash
-npm run test:sprint2g-d
-npm run test:sprint2h-y
-npm run validate
+npm run test:all
 ```
 
-## Hotfix 2 - 2026-09-07
+`test:all` bestaat uit:
 
-Validate-fix na gebruikerslog `validate-20260907-141550.log`:
+```text
+Vitest unit/service/static/React
+→ daarna Playwright E2E
+```
 
-- `tests/models/exportHitlijsten.test.js` verwacht nu ook het 2H-Y veld `ambiguousLinks` in de status-summary.
-- Geen applicatiecode gewijzigd.
-- Oorzaak: testverwachting liep één veld achter op het nieuwe BL-IMP-124 gedrag waarbij meerdere gecombineerde `file_details`-kandidaten blocking zijn.
-
-## Sprint 2H-Y Hotfix 3 - Encoding warning cleanup
-
-Deze hotfix voorkomt dat schone handmatige correcties ten onrechte `RECOVERABLE_ENCODING_DAMAGE` tonen.
-
-Aanleiding: na `Edit -> Handmatig herstellen -> handmatig song/artiest zoeken` kon een rij zoals `Coldcut Featuring Yazz And The Plastic Population - Doctorin' The House` nog steeds een encoding-warning tonen, terwijl de actuele/resolved waarden schoon waren.
-
-Oplossing: `detectEncodingDamage()` meldt encoding-schade alleen nog bij echte mojibake- of replacement-character signalen. Algemene tekstnormalisatie zoals trimmen, NBSP vervangen en HTML entity decoding telt niet meer als encoding-schade.
-
-Testen:
+Gerichte Hotfix 3 regressietest:
 
 ```bash
-npm run test:sprint2h-y-hotfix3
-npm run test:sprint2h-y
-npm run validate
+npm run test:sprint2h-z-hotfix3
 ```
 
-Database: geen schemawijziging nodig. Er is een no-op marker beschikbaar:
+Volledige validatie:
 
 ```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-y-hotfix3
+./startapp.sh validate
 ```
 
----
+`validate` voert reproduceerbaar `npm ci`, build en `test:all` uit. `./startapp.sh all` gebruikt deze validatie één keer en start daarna de development-server.
 
-## Sprint 2H-Y Hotfix 4 — Multiple file_details-kandidaten toestaan bij export
+## Hotfix 3
 
-Deze oplevering corrigeert de 2H-Y exportlogica. Bij export naar `hitlijsten` hoeft de applicatie alleen vast te stellen dat de combinatie artiest + titel minimaal één keer voorkomt in `file_details`. Meerdere varianten/mixen zijn geen blokkade meer; Importhitlijst is juist bedoeld om mogelijke versies en Discogs-links vast te leggen. De definitieve song_type/variantkeuze gebeurt later bij samenstellen via prioriteitsvolgorde.
+De volledige testrun na HF2 bracht legacy `node:test` suites, verouderde UI assertions en enkele waarschuwingen aan het licht. HF3:
 
-### Belangrijkste wijzigingen
+- brengt alle niet-E2E tests onder Vitest;
+- actualiseert paginering-, inbox-, duplicate-review- en documentatietests;
+- voorkomt dat live `node_modules`/`logs` ten onrechte als release-packagefout worden gezien;
+- maakt Runs-navigatieacties semantisch echte links;
+- voorkomt `TimeoutNaNWarning` door veilige Discogs config-fallback;
+- wacht React async DB-statusupdates correct af;
+- gebruikt `musicdb` als standaard PostgreSQL database in actuele instructies.
 
-- `MULTIPLE_FILE_DETAILS_COMBINED_MATCHES` is non-blocking warning.
-- `NO_FILE_DETAILS_COMBINED_MATCH` blijft blocking.
-- Exportvalidatie filtert niet meer op `hl_desired_song_type_key`.
-- `hl_desired_song_type_key` blijft metadata en voorkeur voor latere samenstelling.
-- `hitlijsten.fd_key` wordt technisch deterministisch gevuld omdat het huidige schema NOT NULL/FK afdwingt; dit is bij meerdere kandidaten niet de definitieve samenstelkeuze.
-- `models/import_runs.js` telt multiple candidates niet meer als blocked.
+## Duplicate review
 
-### Tests
+Open een import-run in Edit en gebruik **Zoek dubbele rijen**. Duplicates worden bepaald op genormaliseerde artiest + titel, onafhankelijk van positie. Er vindt nooit automatische delete plaats. De gebruiker kan geselecteerde extra regels op `Skip` zetten of na expliciete bevestiging fysiek uit staging verwijderen. Fysieke delete wijzigt nooit `file_details` en nooit het bronbestand.
 
-```bash
-npm run test:sprint2h-y-hotfix4
-npm run test:sprint2h-y
-npm run validate
-```
+## Release packaging
 
-### Database
+Dit pakket is een volledige applicatiesnapshot zonder `node_modules`, `dist`, logs, `.git`, `.release` of live secrets. De definitieve release-tools metadata `BASE_BRANCH` en `BASE_COMMIT` kan pas worden ingevuld nadat de Import Hitlijsten repository/Git `.release` discovery beschikbaar is; deze waarden worden niet gegokt.
 
-Geen schemawijziging. Er is wel een Docker/PostgreSQL no-op/comment migratie voor releasebeheer:
+## Actuele test-hotfix
+De actuele 2H-Z test-hardening is **Hotfix 4 (v1.1.0)**. Gebruik `npm run test:sprint2h-z-hotfix4` voor de gerichte regressie en `./startapp.sh test` voor de volledige suite.
 
-```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-y-hotfix4
-```

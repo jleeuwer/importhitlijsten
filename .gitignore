@@ -30,3 +30,17 @@ Thumbs.db
 *.war
 config/config.js
 testnode.js
+
+.test-results/
+test-results/
+playwright-report/
+blob-report/
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+!.env.*.sample
+!.env.*.template
+!.sample.env
+!.example.env

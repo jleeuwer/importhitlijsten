@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Badge, Button, Form, Modal, Spinner, Table } from "react-bootstrap";
 import { detectEncodingDamage } from "../../../utils/textFixes.js";
+import StagingDuplicateReview from "../components/StagingDuplicateReview.jsx";
 import {
   applyDiscogsFilters,
   buildDiscogsFilterOptions,
@@ -1541,7 +1542,7 @@ export function EditMain({ ctrl }) {
       {runId && (
         <>
           <div className="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-2">
-            <div className="small text-muted">
+            <div className="small text-muted" aria-label="Rijensamenvatting liedjestabel">
               Rows: {rows.length}
               {filteredRows.length !== rows.length ? ` (matching filter: ${filteredRows.length})` : ""}
               {filteredRows.length > 0 ? ` · pagina ${safeCurrentPage} van ${totalPages} · getoond ${pageStartIndex + 1}-${pageEndIndex}` : ""}
@@ -1794,7 +1795,7 @@ export function EditMain({ ctrl }) {
                   {[25, 50, 100, 250].map((size) => <option key={size} value={size}>{size}</option>)}
                 </Form.Select>
               </div>
-              <div className="small text-muted">
+              <div className="small text-muted" aria-label="Paginastatus liedjestabel">
                 Pagina {safeCurrentPage} van {totalPages} · regels {pageStartIndex + 1}-{pageEndIndex} van {filteredRows.length}
               </div>
               <div className="d-flex gap-1">
@@ -2476,6 +2477,14 @@ export function EditAside({ ctrl }) {
       </WorkflowStepSection>
 
       <WorkflowStepSection title="4. Verrijken/controleren" description="Gebruik correcte artiest/titel voor jaarverrijking en duplicate-controles.">
+      <StagingDuplicateReview
+        runId={runId}
+        disabled={busy || preExportActionsDisabled}
+        refreshRows={refreshRows}
+        setMsg={setMsg}
+        setErr={setErr}
+      />
+
       <Button
         variant="outline-info"
         disabled={actionState("previewYearEnrichment").disabled}

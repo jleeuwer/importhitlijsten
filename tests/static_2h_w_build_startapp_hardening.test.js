@@ -1,9 +1,14 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const childProcess = require('node:child_process');
+/** @vitest-environment node */
+import { test } from 'vitest';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import childProcess from 'node:child_process';
+import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const startappPath = path.join(root, 'startapp.sh');
 const preflightPath = path.join(root, 'scripts', 'preflight_2h_w.js');
@@ -34,12 +39,12 @@ test('startapp.sh ondersteunt Importhitlijst-specifieke npm mapping', () => {
   assert.match(content, /install\)\s+npm_script='install:all'/);
   assert.match(content, /build\)\s+npm_script='build:all'/);
   assert.match(content, /validate\)\s+npm_script='validate'/);
-  assert.match(content, /test\)\s+npm_script='test:e2e'/);
+  assert.match(content, /test\)\s+npm_script='test:all'/);
   assert.match(content, /dev\)\s+npm_script='dev:5174'/);
 });
 
 test('startapp.sh voert zonder argumenten niets uit en toont usage', () => {
-  const temp = fs.mkdtempSync(path.join(require('node:os').tmpdir(), '2hw-startapp-'));
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), '2hw-startapp-'));
   fs.copyFileSync(startappPath, path.join(temp, 'startapp.sh'));
   fs.writeFileSync(path.join(temp, 'package.json'), JSON.stringify({ scripts: {} }));
   const result = childProcess.spawnSync('bash', ['startapp.sh'], {
@@ -83,15 +88,19 @@ test('documentatie en release notes zijn bijgewerkt', () => {
   }
 });
 
-test('oplevering bevat geen verboden folders/bestanden', () => {
-  const forbidden = ['node_modules', 'dist', 'logs', '__MACOSX', '.DS_Store'];
-  const found = [];
-  function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (forbidden.includes(entry.name)) found.push(path.join(dir, entry.name));
-      if (entry.isDirectory()) walk(path.join(dir, entry.name));
-    }
+test('release metadata sluit runtime- en buildartefacts uit', () => {
+  const forbidden = ['node_modules/', 'dist/', 'logs/', '__MACOSX/', '.DS_Store'];
+  const gitignore = read(path.join(root, '.gitignore'));
+  const checksum = read(path.join(root, 'release.sha256'));
+
+  const ignoredNames = new Set(
+    gitignore.split(/\r?\n/).map((line) => line.trim().replace(/\/$/, '')).filter(Boolean)
+  );
+  for (const entry of ['node_modules', 'dist', 'logs', '.DS_Store']) {
+    assert.equal(ignoredNames.has(entry), true, `.gitignore mist ${entry}`);
   }
-  walk(root);
-  assert.deepEqual(found, []);
+
+  for (const entry of forbidden) {
+    assert.equal(checksum.includes(entry), false, `release.sha256 mag ${entry} niet bevatten`);
+  }
 });

@@ -24,16 +24,15 @@ describe('Sprint 2H-R documentation/backlog cleanup', () => {
   it('records the closed Discogs sprint decisions and current status documents', () => {
     const status = read('docs/backlog/BACKLOG_STATUS_20260704.md');
     const sprint = read('docs/sprint-2h/SPRINT_2H_R_DOCUMENTATIE_BACKLOG_CLEANUP.md');
-    const latest = read('laatstesprint.md');
+    const backlog = read('BACKLOG.md');
 
     expect(status).toContain('2H-H — Discogs zoekmodal UX en enrichment-onderzoek: gesloten / akkoord');
     expect(status).toContain('2H-K — Discogs detailinspectie vanuit zoekmodal: gesloten / akkoord');
     expect(status).toContain('2H-L — Discogs UX harmonisatie: gesloten / akkoord');
-    expect(status).toContain('BL-IMP-090');
 
     expect(sprint).toContain('BL-IMP-090 — Documentatie consolidatie en backlog cleanup');
     expect(sprint).toContain('Geen wijziging in importlogica');
-    expect(latest).toContain('2H-R — BL-IMP-090 Documentatie consolidatie en backlog cleanup');
+    expect(backlog).toContain('| BL-IMP-090 | Documentatie consolidatie en backlog cleanup | Sprint 2H-R |');
   });
 
   it('exposes the sprint validation script in package.json', () => {
