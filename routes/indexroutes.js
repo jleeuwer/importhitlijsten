@@ -3,7 +3,7 @@ import express from "express";
 import { z } from "zod";
 
 import { renderApp } from "../src/server/ssr.js";
-import { uploadCsv } from "../middleware/upload.js";
+import { uploadCsv, uploadImportCandidateBatch } from "../middleware/upload.js";
 import { healthCheck, pool } from "../config/db.js";
 
 import { listRuns } from "../models/import_runs.js";
@@ -51,6 +51,16 @@ import { assertPreExportActionAllowed } from "../services/exportWorkflowGuardSer
 import { addPatternsToStringDelPatterns, addPatternsToStringKeepPatterns, getPatternSuggestionsForRun, previewPatternSuggestionsForRun } from "../services/patternDiscoveryService.js";
 import { logger } from "../config/logger.js";
 import { scanImportDirectory, markFileAsAlreadyImported, unmarkFileAsAlreadyImported, assertCsvPathInsideDirectory } from "../services/importFileRegistryService.js";
+import {
+  createImportCandidatesFromFiles,
+  importAllReadyCandidates,
+  importCandidate,
+  listImportCandidates,
+  removeAllTemporaryImportCandidates,
+  removeImportCandidate,
+  saveImportCandidateMetadata,
+  setImportCandidateDuplicateOverride
+} from "../services/importUploadCandidateService.js";
 
 export const router = express.Router();
 
@@ -470,6 +480,85 @@ router.delete("/api/import-runs/:runId", async (req, res, next) => {
 });
 
 /* --------------------------
+   2H-AA Import candidate APIs
+-------------------------- */
+
+router.get("/api/import-candidates", async (req, res, next) => {
+  try {
+    res.json({ ok: true, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/api/import-candidates", uploadImportCandidateBatch, async (req, res, next) => {
+  try {
+    const source = String(req.body?.source || "FILE_PICKER").toUpperCase();
+    const created = await createImportCandidatesFromFiles(req.files || [], { source });
+    res.status(201).json({ ok: true, created, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/api/import-candidates/:uploadId/metadata", async (req, res, next) => {
+  try {
+    const candidate = await saveImportCandidateMetadata(String(req.params.uploadId || ""), req.body?.metadata ?? req.body ?? {});
+    res.json({ ok: true, candidate });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch("/api/import-candidates/:uploadId/duplicate-override", async (req, res, next) => {
+  try {
+    const candidate = await setImportCandidateDuplicateOverride(
+      String(req.params.uploadId || ""),
+      req.body?.duplicateOverride === true
+    );
+    res.json({ ok: true, candidate });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/api/import-candidates/:uploadId/import", async (req, res, next) => {
+  try {
+    const result = await importCandidate(String(req.params.uploadId || ""));
+    res.json({ ok: true, ...result, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/api/import-candidates/import-ready", async (req, res, next) => {
+  try {
+    const result = await importAllReadyCandidates();
+    res.json({ ok: true, ...result, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/api/import-candidates/:uploadId", async (req, res, next) => {
+  try {
+    const result = await removeImportCandidate(String(req.params.uploadId || ""));
+    res.json({ ok: true, ...result, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/api/import-candidates", async (req, res, next) => {
+  try {
+    const result = await removeAllTemporaryImportCandidates({ confirmed: req.body?.confirmed === true });
+    res.json({ ok: true, ...result, candidates: await listImportCandidates() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/* --------------------------
    SSR Pages
 -------------------------- */
 
@@ -490,6 +579,17 @@ router.get("/import", async (req, res, next) => {
   try {
     const dbHealth = await healthCheck();
     const metadataOptions = await getMetadataOptions();
+    let importCandidates = [];
+    let importCandidateFeatureError = null;
+    try {
+      importCandidates = await listImportCandidates();
+    } catch (candidateError) {
+      if (candidateError?.code === "42P01") {
+        importCandidateFeatureError = "Database-migratie 2H-AA is nog niet uitgevoerd.";
+      } else {
+        throw candidateError;
+      }
+    }
     const directoryPath = String(req.query.directory || "").trim();
     const showImported = String(req.query.showImported || "") === "1";
     const selectedFile = String(req.query.selectedFile || "").trim();
@@ -515,7 +615,9 @@ router.get("/import", async (req, res, next) => {
       showImported,
       selectedFile,
       directoryScan,
-      directoryError
+      directoryError,
+      importCandidates,
+      importCandidateFeatureError
     };
     return renderPage(req, res, { title: "Import Hitlijst CSV", state });
   } catch (error) {
@@ -681,7 +783,7 @@ router.get("/api/staging", async (req, res, next) => {
 // import { z } from "zod";
 
 // import { renderApp } from "../src/server/ssr.js";
-// import { uploadCsv } from "../middleware/upload.js";
+// import { uploadCsv, uploadImportCandidateBatch } from "../middleware/upload.js";
 // import { healthCheck, pool } from "../config/db.js";
 
 // import { listRuns } from "../models/import_runs.js";

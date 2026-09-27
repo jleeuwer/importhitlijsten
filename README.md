@@ -82,3 +82,25 @@ Dit pakket is een volledige applicatiesnapshot zonder `node_modules`, `dist`, lo
 ## Actuele test-hotfix
 De actuele 2H-Z test-hardening is **Hotfix 4 (v1.1.0)**. Gebruik `npm run test:sprint2h-z-hotfix4` voor de gerichte regressie en `./startapp.sh test` voor de volledige suite.
 
+
+## Sprint 2H-AA — Drag-and-drop CSV Import Inbox (v1.2.0)
+
+BL-IMP-135 voegt een refresh-bestendige multi-file drag-and-drop/file-picker inbox toe naast de bestaande directory-scan. Iedere CSV heeft eigen conceptmetadata en gebruikt dezelfde SHA-256/list-fingerprint duplicatecontrole als 2H-Z.
+
+Database-migratie:
+
+```bash
+POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-aa
+```
+
+Gerichte tests:
+
+```bash
+npm run test:sprint2h-aa
+```
+
+Zie `Release Notes/RELEASE_NOTES_2H_AA_v1.2.0.md` en `docs/sprint-2h/SPRINT_2H_AA_DRAG_DROP_CSV_IMPORT.md`.
+
+
+## 2H-AA Hotfix 1
+De v1.2.0 release bevat een pre-acceptance test/accessibility-correctie. Gebruik `npm run test:sprint2h-aa-hotfix1` voor de gerichte regressiesuite en daarna `npm run test:all`.

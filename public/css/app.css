@@ -109,3 +109,26 @@ td.wrap-col, th.wrap-col {
   white-space: normal !important;
   word-break: break-word;
 }
+
+/* 2H-AA — drag-and-drop CSV import inbox */
+.import-dropzone {
+  border: 2px dashed var(--bs-border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bs-tertiary-bg);
+  transition: border-color 120ms ease, background-color 120ms ease, transform 120ms ease;
+}
+
+.import-dropzone:hover,
+.import-dropzone:focus,
+.import-dropzone-active {
+  border-color: var(--bs-primary);
+  background: var(--bs-primary-bg-subtle);
+  outline: none;
+}
+
+.import-dropzone-active {
+  transform: scale(1.005);
+}

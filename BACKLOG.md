@@ -1,8 +1,8 @@
 # Importhitlijst Backlog — actuele geconsolideerde stand
 
-Laatste documentatie-update: **Sprint 2H-Z Hotfix 3 — Test Suite Hardening**.  
-Actuele codebaseline: **2H-Z / v1.1.0 Hotfix 3**.  
-Actuele documentatiebaseline: **2H-Z / v1.1.0 Hotfix 3**.
+Laatste documentatie-update: **Sprint 2H-AA — BL-IMP-135 Drag-and-drop CSV Import Inbox**.  
+Geaccepteerde codebaseline vóór deze sprint: **2H-Z / v1.1.0 Hotfix 4**.  
+Actuele releasecandidate: **2H-AA / v1.2.0**.
 
 ## Leeswijzer
 
@@ -57,7 +57,7 @@ Status: **codebouw v1.1.0 opgeleverd; Hotfix 1 verwerkt UX-bevindingen**.
 
 ### BL-IMP-136 — Post-import dubbele rijen detecteren, reviewen en opschonen
 
-Status: **Hotfix 2 opgeleverd; acceptatietest loopt**.
+Status: **gesloten / geaccepteerd in 2H-Z v1.1.0**.
 
 - duplicate-identiteit = genormaliseerde artiest + titel binnen dezelfde import-run;
 - positie is context en geen onderdeel van duplicate-identiteit;
@@ -78,16 +78,27 @@ Status: **codebouw opgeleverd; acceptatietest loopt**.
 - Discogs timeout/cache NaN-fallback gehard;
 - actuele PostgreSQL documentatie/defaults gebruiken `musicdb`.
 
-## BL-IMP-135 — Drag-and-drop CSV-bestand voor import
+## BL-IMP-135 — Drag-and-drop CSV-importselectie
 
-Functionele scope:
+Status: **actuele sprint 2H-AA — concrete code opgeleverd; acceptatietest open; code- en documentatieversie 1.2.0**.
 
-- drag-and-drop dropzone bij de bestaande bestandselectie;
-- alleen ondersteunde CSV-bestanden accepteren;
-- dezelfde validatie/importflow als normale file picker;
-- duidelijke drag-over, validatie- en foutstatus;
-- bestaande file picker blijft beschikbaar;
-- na geldige drop importformulier activeren en focus naar `Hitlijst name`.
+Vastgestelde scope:
+
+- drag-and-drop én klikbare multi-file picker;
+- bestaande directory-scan blijft behouden;
+- maximaal 50 CSV's per batch, 25 MB per CSV;
+- één bestand: automatisch selecteren + focus `Hitlijst name`; meerdere: eerst inbox vullen;
+- iedere CSV krijgt eigen naam, jaar, omroep, periode en overige metadata;
+- conceptmetadata en kandidaten overleven refresh en blijven maximaal 7 dagen beschikbaar;
+- dezelfde SHA-256 en semantic list-fingerprint duplicatecontrole als 2H-Z;
+- expliciete override voor reeds geïmporteerd bestand/lijstinhoud;
+- individueel importeren of `Importeer alle gereedstaande lijsten`;
+- bulkimport per kandidaat transactioneel en foutgeïsoleerd;
+- resultaatssamenvatting met doorklik naar blocked/error kandidaten;
+- individuele cleanup en `Verwijder alle tijdelijke bestanden`;
+- automatische cleanup bij serverstart en optioneel periodiek, zonder aparte cron/container.
+
+Zie de 2H-AA requirements, functioneel ontwerp, technisch ontwerp en functionele testcases.
 
 ## Gesloten / gevalideerd
 
@@ -117,6 +128,9 @@ Functionele scope:
 | BL-IMP-131 | Repair bestaande foutieve attention-statussen | Sprint 2H-Y |
 | BL-IMP-132 | Robuuste `startapp.sh` Artist-style | Geaccepteerd |
 | BL-IMP-133 | Discogs-link lifecycle | Sprint 2H-Y |
+| BL-IMP-136 | Post-import duplicate row review/cleanup | Sprint 2H-Z v1.1.0 |
+| BL-IMP-134 | CSV import file lifecycle / registry | Sprint 2H-Z v1.1.0 |
+| BL-IMP-119 | Exact duplicate list detection | Sprint 2H-Z v1.1.0 |
 
 ## Historisch / geparkeerd
 
@@ -128,3 +142,9 @@ Oudere items die door latere sprints zijn ingehaald of samengevoegd blijven in `
 - `Open` = actief backlog-item voor een toekomstige sprint.
 - `Codebouw opgeleverd; acceptatietest loopt` = code en testbasis zijn geleverd maar de actuele releasecandidate is nog niet door de gebruiker geaccepteerd.
 - `Historisch / geparkeerd` = niet actief plannen zonder nieuwe bevinding.
+
+
+## 2H-AA Hotfix 2 testbevinding
+- BL-IMP-135: kandidaatmetadata PATCH gaf PostgreSQL `inconsistent types deduced for parameter $3`.
+- Correctie: expliciete consistente `varchar(32)` cast in modelquery.
+- Status: code opgeleverd voor hertest; onderdeel van 2H-AA v1.2.0, nog niet afzonderlijk afgesloten.

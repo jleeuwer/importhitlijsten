@@ -95,3 +95,14 @@ BL-IMP-136 is geïmplementeerd in `services/stagingDuplicateRowService.js` en `s
 - `EditPage.jsx` biedt stabiele aria-labels voor rijensamenvatting en paginastatus.
 - `discogsClient.js` gebruikt `parsePositiveNumberConfig` om NaN/0/ongeldige timeout- en cachewaarden af te vangen.
 - HF3 heeft geen nieuwe database-migratie.
+
+
+---
+
+## 2H-AA — technische implementatie
+
+2H-AA implementeert persistent opgeslagen tijdelijke uploadkandidaten in `import_upload_candidates`, een multi-file Multer-flow, per-kandidaat JSONB conceptmetadata, veilige tempbestandsopslag, bestaande SHA/fingerprint-registryhergebruik, individuele/bulkimport en 7-daagse cleanup. De idempotente PostgreSQL-migratie staat in `scripts/sql/20260927_sprint2h_aa_import_upload_candidates.sql`; Docker-uitvoering verloopt via `npm run db:migrate:sprint2h-aa`. Zie `docs/technical/TECHNICAL_SPEC_2H_AA_DRAG_DROP_CSV_IMPORT.md`.
+
+
+## 2H-AA Hotfix 2 — PostgreSQL parameter typing
+`updateImportUploadCandidateMetadata` gebruikt dezelfde bindparameter `$3` voor `iuc_status` en voor de conditie die een eerdere importfout wist zodra de kandidaat `READY` wordt. PostgreSQL leidde voor die twee contexten verschillende types af. Beide usages worden daarom expliciet gecast naar `varchar(32)`. Er is geen schemawijziging en dus geen nieuwe database-migratie.

@@ -66,5 +66,5 @@ describe("Edit large run rendering hotfix", () => {
     expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/Pagina 2 van 5.*regels 51-100 van 250/i);
     expect(screen.getAllByText("Artist 51", { exact: true }).length).toBeGreaterThan(0);
     expect(screen.queryAllByText("Artist 1", { exact: true })).toHaveLength(0);
-  });
+  }, 10000);
 });

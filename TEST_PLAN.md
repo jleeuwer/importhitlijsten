@@ -54,3 +54,21 @@ Volledige suite:
 ```
 
 De functionele cases HF3-01 t/m HF3-12 staan in `docs/testcases/FUNCTIONAL_TEST_CASES_2H_Z_HOTFIX3_TEST_SUITE_HARDENING.md`. Belangrijkste dekking: Vitest-unificatie, actuele paginering, row-scoped duplicate/inbox assertions, link-accessibility, Discogs config fallback en `musicdb` documentatie.
+
+
+## 2H-AA — BL-IMP-135
+
+De functionele acceptatiebasis bestaat uit 40 testcases voor drag/drop, multi-select, per-bestand metadata, refresh-persistentie, duplicates, individuele en bulkimport, foutisolatie, cleanup en security. Zie `docs/testcases/FUNCTIONAL_TEST_CASES_2H_AA_DRAG_DROP_CSV_IMPORT.md`. De gerichte geautomatiseerde regressiesuite is `npm run test:sprint2h-aa`; volledige regressie blijft `./startapp.sh test`. Nieuwe dekking: service/business rules, React drag/drop/per-bestand metadata en statische migratie/API/releasecontroles.
+
+
+## 2H-AA Hotfix 1
+Voer `npm run test:sprint2h-aa-hotfix1` uit en daarna `npm run test:all`. Hotfix 1 dekt versie-alignment, directory-label accessibility, kandidaat-focus en de twee zware Edit-pagineringregressies.
+
+
+## 2H-AA Hotfix 2 — kandidaatmetadata SQL-typing
+
+Aanvullende regressie:
+- PATCH kandidaatmetadata met geldige lijstnaam/jaar/omroep/periode voert één typed PostgreSQL statement uit;
+- statusparameter `$3` is zowel bij `iuc_status` als bij de `READY`-vergelijking expliciet `varchar(32)`;
+- status `READY` kan `iuc_import_error` veilig op NULL zetten zonder PostgreSQL type-inference fout;
+- bestaande service- en React-tests voor BL-IMP-135 blijven onderdeel van de gerichte hotfixsuite.

@@ -1,44 +1,51 @@
 # Laatste sprint
 
-## 2H-Z Hotfix 4 — Pagination Test Selector Hardening
+## 2H-AA — BL-IMP-135 Drag-and-drop CSV Import Inbox
 
-**Versie:** 1.1.0  
-**Status:** code opgeleverd; klaar voor lokale acceptatietest.
+**Versie documentatie:** 1.2.0  
+**Versie codesprint:** 1.2.0  
+**Baseline:** geaccepteerde Import Hitlijsten v1.1.0 (2H-Z/HF4)  
+**Status:** code opgeleverd; Hotfix 1 verwerkt naar aanleiding van volledige `test:all` run; opnieuw gereed voor acceptatietest.
 
-### Aanleiding
+### Functionele kern
 
-De volledige `test:all` run van Hotfix 3 verbeterde van 20 falende testbestanden naar nog slechts 2 falende tests. Beide failures kwamen uit Edit-pagineringtests en hadden dezelfde oorzaak: een artiestnaam staat bewust zowel in de kolom **Artiest** als in **Correcte Artiest Spelling**. Een `getByText()`-assertie verwacht exact één match en faalde daardoor ondanks correct paginagedrag.
+- één of meerdere CSV's slepen of via een klikbare bestandsdialoog kiezen;
+- directory-scan blijft behouden;
+- max. 50 bestanden per batch, 25 MB per bestand;
+- per CSV eigen hitlijstnaam, jaar, omroep, periode en overige metadata;
+- kandidaten en conceptmetadata blijven na refresh beschikbaar;
+- dezelfde duplicatecontrole als 2H-Z;
+- individueel importeren of alle gereedstaande kandidaten verwerken;
+- bulkfouten zijn geïsoleerd per kandidaat;
+- tijdelijke bestanden maximaal 7 dagen bewaren en veilig opruimen.
 
-### Opgelost
+### Technische implementatie
 
-1. `EditPaginationAndTitle.test.jsx` gebruikt multi-match-veilige presence/absence assertions.
-2. `EditLargeRunRendering.test.jsx` gebruikt dezelfde robuuste selectorstrategie.
-3. De UI of pagineringslogica is niet aangepast: de test is afgestemd op de bestaande, correcte rendering.
-4. Een regressietest bewaakt dat deze twee tests niet terugvallen naar single-match selectors voor bewust dubbele artiesttekst.
-5. Nieuwe sprintscript: `npm run test:sprint2h-z-hotfix4`.
+- persistent kandidaatmodel `import_upload_candidates`;
+- multi-file Multer upload;
+- veilige storage-id in `uploads/import-candidates`;
+- JSONB conceptmetadata;
+- hergebruik `sha256File`, CSV parser, `calculateListFingerprint`, registry lookup en `importHitlijstCsv`;
+- cleanup bij serverstart en optioneel periodiek;
+- PostgreSQL databasevoorbeelden gebruiken `musicdb` en container `my-postgresdb`.
+
+### Documenten
+
+- `docs/requirements/REQUIREMENTS_2H_AA_BL_IMP_135.md`
+- `docs/sprint-2h/SPRINT_2H_AA_DRAG_DROP_CSV_IMPORT.md`
+- `docs/technical/TECHNICAL_SPEC_2H_AA_DRAG_DROP_CSV_IMPORT.md`
+- `docs/testcases/FUNCTIONAL_TEST_CASES_2H_AA_DRAG_DROP_CSV_IMPORT.md`
 
 ### Database
 
-Hotfix 4 heeft geen nieuwe database-migratie. Indien de 2H-Z/HF2 migraties nog nodig zijn:
+De codesprint bevat `scripts/sql/20260927_sprint2h_aa_import_upload_candidates.sql` en `scripts/apply_sprint2h_aa_import_upload_candidates.sh`. Uitvoering: `POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-aa`. Documentatie en code gebruiken beide **v1.2.0**.
 
-```bash
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-z
-POSTGRES_CONTAINER=my-postgresdb POSTGRES_DB=musicdb POSTGRES_USER=postgres npm run db:migrate:sprint2h-z-hotfix2
-```
 
-### Testen
+### Hotfix 1 — test stability
 
-```bash
-npm run test:sprint2h-z-hotfix4
-./startapp.sh test
-```
+Na de eerste volledige v1.2.0 testrun zijn vijf testfouten gecorrigeerd: legacy versieassertion, twee lokale timeouts, directory-label accessibility en kandidaat-focus testscoping. Applicatieversie en documentatiesprint blijven **1.2.0**. Geen nieuwe database-migratie.
 
-`./startapp.sh test` moet eerst de volledige Vitest-suite groen afronden; pas daarna start door de `&&`-keten Playwright.
 
-### Bekend niet-blokkerend punt
+### Hotfix 2 — candidate metadata PATCH SQL typing
 
-In de aangeleverde Hotfix 3-run komen nog `TimeoutNaNWarning`-meldingen voor. Ze veroorzaken geen test failure, maar blijven een apart test-harness/third-party transition cleanup-punt.
-
-### Buiten scope
-
-BL-IMP-135 drag-and-drop CSV-selectie blijft open.
+Tijdens functioneel testen van de nieuwe drag-and-drop/file-picker flow gaf het opslaan van kandidaatmetadata via `PATCH /api/import-candidates/:uploadId/metadata` PostgreSQL-fout `inconsistent types deduced for parameter $3`. De statusparameter wordt nu in beide SQL-contexten expliciet als `varchar(32)` gecast. Hierdoor kunnen hitlijstnaam, jaar, omroep en periode weer afzonderlijk per kandidaat worden opgeslagen. Geen database-migratie nodig; versie blijft **1.2.0**.

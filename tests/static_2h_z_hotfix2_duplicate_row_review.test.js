@@ -27,11 +27,10 @@ describe("2H-Z Hotfix 2 static integration", () => {
     expect(startapp).toMatch(/all\)\s+[\s\S]*add_action validate[\s\S]*add_action dev/);
   });
 
-  it("keeps application version on the documentation sprint version 1.1.0", () => {
+  it("keeps package and lock application versions aligned", () => {
     const pkg = JSON.parse(read("package.json"));
     const lock = JSON.parse(read("package-lock.json"));
-    expect(pkg.version).toBe("1.1.0");
-    expect(lock.version).toBe("1.1.0");
-    expect(lock.packages?.[""]?.version).toBe("1.1.0");
+    expect(lock.version).toBe(pkg.version);
+    expect(lock.packages?.[""]?.version).toBe(pkg.version);
   });
 });

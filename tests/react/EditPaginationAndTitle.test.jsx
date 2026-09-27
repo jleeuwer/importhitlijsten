@@ -73,5 +73,5 @@ describe("Edit title and pagination", () => {
     fireEvent.change(screen.getByLabelText(/regels per pagina/i), { target: { value: "25" } });
     expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/pagina 1 van 3/i);
     expect(screen.getByLabelText(/paginastatus liedjestabel/i)).toHaveTextContent(/regels 1-25 van 60/i);
-  });
+  }, 10000);
 });

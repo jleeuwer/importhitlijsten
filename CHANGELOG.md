@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.2.0 — 2H-AA — feature — 2026-09-27
+- BL-IMP-135 requirements interactief vastgesteld.
+- Drag-and-drop en klikbare multi-file CSV-selectie naast bestaande directory-scan.
+- Maximaal 50 bestanden per batch en 25 MB per CSV.
+- Per bestand onafhankelijke conceptmetadata met refresh-persistentie.
+- Bestaande SHA-256/list-fingerprint duplicatecontrole en expliciete override hergebruiken.
+- Individuele én foutgeïsoleerde bulkimport van alle gereedstaande kandidaten.
+- Tijdelijke bewaartermijn 7 dagen, individuele/bulk-cleanup en serverstart-cleanup.
+- PostgreSQL `import_upload_candidates` en veilige tempopslag geïmplementeerd.
+- Nieuwe kandidaat-API voor upload, metadata, duplicate override, individuele/bulkimport en cleanup.
+- Idempotente Docker/PostgreSQL migratie en `db:migrate:sprint2h-aa` toegevoegd.
+- Geautomatiseerde service-, React- en statische sprinttests toegevoegd.
+- Documentatiesprint en toekomstige codesprint gebruiken beide versie 1.2.0.
+
+### 2H-AA Hotfix 1 — test stability — 2026-09-27
+- Corrigeert 5 failures uit de volledige `test:all` run zonder functionele rollback.
+- Historische 2H-Z versieassertion niet langer hardcoded op 1.1.0.
+- Directory-scanlabel expliciet gekoppeld aan het invoerveld.
+- Drag-and-drop focusregressietest gescoped op kandidaatmetadata.
+- Zware Edit-pagineringtests krijgen lokaal 10s timeout.
+- Geen databasewijziging; applicatieversie blijft 1.2.0.
+
+### 2H-AA Hotfix 2 — candidate metadata PATCH SQL typing — 2026-09-27
+- Corrigeert PostgreSQL fout `inconsistent types deduced for parameter $3` bij `PATCH /api/import-candidates/:uploadId/metadata`.
+- Oorzaak: placeholder `$3` werd in dezelfde prepared statement zowel als `varchar`-kolomtoewijzing als ongetypeerde tekstvergelijking gebruikt.
+- `iuc_status` en de `READY`-vergelijking gebruiken nu expliciet `varchar(32)`.
+- Regressietests toegevoegd voor model-SQL en statische queryguard.
+- Geen databasewijziging; applicatie- en documentatieversie blijven 1.2.0.
+
 ## 1.1.0 — 2026-09-25
 - Buildcorrectie: ontbrekende sluitende `}` in de dynamische `className` JSX-expressie van `ImportPage.jsx` hersteld; regressietest toegevoegd.
 - BL-IMP-134: CSV import registry en import-inbox.

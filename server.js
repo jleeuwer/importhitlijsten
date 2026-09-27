@@ -11,6 +11,7 @@ import { router } from "./routes/indexroutes.js"; // (op mac case-insensitive; o
 import { logger } from "./config/logger.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 import { pool } from "./config/db.js";
+import { cleanupExpiredImportCandidates, scheduleImportCandidateCleanup } from "./services/importUploadCandidateService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,8 +126,10 @@ app.use(errorHandler);
 try {
   await pool.query("SELECT 1");
   logger.info("DB reachable ✅");
+  await cleanupExpiredImportCandidates();
+  scheduleImportCandidateCleanup();
 } catch (e) {
-  logger.error("DB unreachable ❌ - is Postgres running?", { message: e.message });
+  logger.error("DB unreachable or startup cleanup failed ❌", { message: e.message });
 }
 
 app.listen(port, () => {

@@ -3,7 +3,7 @@
 ## Actuele sprint
 
 ```text
-2H-Z Hotfix 3 — Test Suite Hardening (v1.1.0)
+2H-AA — BL-IMP-135 Drag-and-drop CSV Import Inbox (v1.2.0, code opgeleverd)
 ```
 
 De 2H-S-sectie hieronder blijft als historische functionele baseline voor Pattern discovery behouden.
@@ -45,3 +45,14 @@ Na import kan de gebruiker binnen de geselecteerde import-run expliciet zoeken n
 ## 2H-Z Hotfix 3 — Test Suite Hardening
 
 De gebruikersflow van 2H-Z verandert inhoudelijk niet. De volledige geautomatiseerde testketen wordt betrouwbaar gemaakt door één unit/static/React-runner (Vitest) te gebruiken. Runs-navigatieacties worden semantisch als links aangeboden, en ongeldige Discogs timeout/cache instellingen vallen terug op veilige defaults. Actuele PostgreSQL voorbeelden gebruiken `musicdb`.
+
+
+---
+
+## 2H-AA — BL-IMP-135 Drag-and-drop CSV Import Inbox
+
+De bestaande directory-scan blijft bestaan en krijgt een aanvullende dropzone/bestandskiezer voor maximaal 50 CSV-bestanden per batch en 25 MB per bestand. Iedere kandidaat heeft eigen conceptmetadata, blijft 7 dagen refresh-bestendig, gebruikt de bestaande SHA-256/list-fingerprint duplicatecontrole en kan individueel of via `Importeer alle gereedstaande lijsten` worden geïmporteerd. Bulkimport is per kandidaat transactioneel en foutgeïsoleerd. Zie `docs/sprint-2h/SPRINT_2H_AA_DRAG_DROP_CSV_IMPORT.md`.
+
+
+## 2H-AA Hotfix 2 — metadata opslaan
+Bij het invullen/wijzigen van metadata van een tijdelijke CSV-kandidaat (hitlijstnaam, jaar, omroep, periode) moet opslaan zonder serverfout verlopen. De functionele flow wijzigt niet; dit is een technische reparatie van de persistentiestap.
